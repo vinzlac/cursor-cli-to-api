@@ -4,14 +4,14 @@ FROM python:3.11-slim
 # Installer uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
-# D?finir le r?pertoire de travail
+# Définir le répertoire de travail
 WORKDIR /app
 
 # Copier les fichiers de configuration
 COPY pyproject.toml ./
 COPY .python-version ./
 
-# Installer les d?pendances avec uv
+# Installer les dépendances avec uv
 RUN uv sync --frozen --no-dev
 
 # Copier le code source
@@ -24,5 +24,5 @@ EXPOSE 8000
 ENV PYTHONUNBUFFERED=1
 ENV RELOAD=false
 
-# Commande par d?faut
+# Commande par défaut
 CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
