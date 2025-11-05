@@ -2,9 +2,9 @@
 
 Ce guide explique comment configurer le fichier `.env` pour votre environnement.
 
-## ?? étapes de configuration
+## 📋 Étapes de configuration
 
-### 1. Cr?er le fichier .env
+### 1. Créer le fichier .env
 
 ```bash
 # Copier le fichier d'exemple
@@ -16,20 +16,20 @@ touch .env
 
 ### 2. éditer le fichier .env
 
-Ouvrez `.env` avec votre ?diteur préféré et configurez les variables selon vos besoins.
+Ouvrez `.env` avec votre éditeur préféré et configurez les variables selon vos besoins.
 
-## ?? Variables de configuration
+## ⚙️ Variables de configuration
 
 ### Variables de serveur
 
 ```env
-# Adresse d'?coute du serveur (0.0.0.0 pour toutes les interfaces)
+# Adresse d'écoute du serveur (0.0.0.0 pour toutes les interfaces)
 HOST=0.0.0.0
 
-# Port d'?coute
+# Port d'écoute
 PORT=8000
 
-# Mode rechargement automatique (true pour d?veloppement, false pour production)
+# Mode rechargement automatique (true pour développement, false pour production)
 RELOAD=false
 ```
 
@@ -41,10 +41,10 @@ RELOAD=false
 # Mode d'intégration: "cli", "http", ou "library"
 CURSOR_AGENT_MODE=cli
 
-# Chemin vers l'exécutable cursor-agent (optionnel, utilise "cursor-agent" par d?faut)
+# Chemin vers l'exécutable cursor-agent (optionnel, utilise "cursor-agent" par défaut)
 CURSOR_AGENT_CLI_PATH=cursor-agent
 
-# Timeout en secondes pour les appels ? cursor-agent
+# Timeout en secondes pour les appels à cursor-agent
 CURSOR_AGENT_TIMEOUT=60
 ```
 
@@ -70,7 +70,7 @@ CURSOR_AGENT_TIMEOUT=60
 ### Variables de sécurité
 
 ```env
-# Cl? API pour l'authentification (optionnel mais recommandé en production)
+# Clé API pour l'authentification (optionnel mais recommandé en production)
 # Si défini, toutes les requêtes devront inclure: Authorization: Bearer <API_KEY>
 API_KEY=
 
@@ -88,7 +88,7 @@ LOG_LEVEL=INFO
 ### Variables de l'API (optionnel - pour personnaliser)
 
 ```env
-# Titre de l'API (affich? dans la documentation)
+# Titre de l'API (affiché dans la documentation)
 API_TITLE=Cursor Agent API Proxy
 
 # Version de l'API
@@ -98,9 +98,9 @@ API_VERSION=1.0.0
 API_DESCRIPTION=Proxy FastAPI pour cursor-agent compatible avec l'API OpenAI
 ```
 
-## ?? Exemples de configuration complète
+## 📝 Exemples de configuration complète
 
-### Exemple 1: D?veloppement local avec CLI
+### Exemple 1: Développement local avec CLI
 
 ```env
 # Serveur
@@ -113,7 +113,7 @@ CURSOR_AGENT_MODE=cli
 CURSOR_AGENT_CLI_PATH=cursor-agent
 CURSOR_AGENT_TIMEOUT=60
 
-# S?curit? (d?sactivée en d?veloppement)
+# Sécurité (désactivée en développement)
 API_KEY=
 
 # Logging
@@ -133,7 +133,7 @@ CURSOR_AGENT_MODE=http
 CURSOR_AGENT_HTTP_URL=https://api.cursor-agent.com/v1/chat
 CURSOR_AGENT_TIMEOUT=120
 
-# S?curit?
+# Sécurité
 API_KEY=sk-prod-1234567890abcdefghijklmnopqrstuvwxyz
 
 # Logging
@@ -153,16 +153,16 @@ CURSOR_AGENT_MODE=cli
 CURSOR_AGENT_CLI_PATH=/usr/local/bin/cursor-agent
 CURSOR_AGENT_TIMEOUT=90
 
-# S?curit?
+# Sécurité
 API_KEY=sk-your-secret-key-here
 
 # Logging
 LOG_LEVEL=WARNING
 ```
 
-## ?? G?n?ration d'une clé API s?curis?e
+## 🔑 Génération d'une clé API sécurisée
 
-Pour générer une clé API s?curis?e:
+Pour générer une clé API sécurisée:
 
 ```bash
 # Avec Python
@@ -175,36 +175,36 @@ openssl rand -hex 32 | sed 's/^/sk-/'
 echo "sk-$(uuidgen | tr -d '-' | tr '[:upper:]' '[:lower:]')"
 ```
 
-## ? V?rification de la configuration
+## ✅ Vérification de la configuration
 
-Apr?s avoir configuré `.env`, vérifiez que tout fonctionne:
+Après avoir configuré `.env`, vérifiez que tout fonctionne:
 
 ```bash
-# V?rifier que le fichier existe
+# Vérifier que le fichier existe
 ls -la .env
 
 # Tester le chargement de la configuration
 just info
 
-# D?marrer le serveur en mode d?veloppement
+# Démarrer le serveur en mode développement
 just dev
 
 # Dans un autre terminal, tester
 curl http://localhost:8000/health
 ```
 
-## ?? D?pannage
+## 🔧 Dépannage
 
 ### Le fichier .env n'est pas lu
 
-1. V?rifiez que le fichier s'appelle exactement `.env` (avec le point au d?but)
-2. V?rifiez qu'il est dans le r?pertoire racine du projet
-3. V?rifiez qu'il n'y a pas d'espaces autour du `=` dans les variables
-4. Redémarrez le serveur apr?s modification
+1. Vérifiez que le fichier s'appelle exactement `.env` (avec le point au début)
+2. Vérifiez qu'il est dans le répertoire racine du projet
+3. Vérifiez qu'il n'y a pas d'espaces autour du `=` dans les variables
+4. Redémarrez le serveur après modification
 
 ### Variables non prises en compte
 
-- Les variables doivent ?tre en MAJUSCULES
+- Les variables doivent être en MAJUSCULES
 - Pas d'espaces autour du `=`
 - Utilisez des guillemets si la valeur contient des espaces:
   ```env
@@ -213,12 +213,12 @@ curl http://localhost:8000/health
 
 ### Erreur de syntaxe
 
-Le fichier `.env` utilise un format simple `KEY=VALUE`. évitez:
+Le fichier `.env` utilise un format simple `KEY=VALUE`. Évitez:
 - Les commentaires inline (utilisez des lignes séparées avec `#`)
-- Les caract?res sp?ciaux non échappés
+- Les caractères spéciaux non échappés
 - Les lignes vides au milieu (sauf pour la lisibilité)
 
-## ?? R?f?rences
+## 📚 Références
 
 - Voir `INTEGRATION.md` pour les détails sur l'intégration avec cursor-agent
 - Voir `DEPLOYMENT.md` pour la configuration en production

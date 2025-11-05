@@ -1,42 +1,42 @@
 # Guide de déploiement
 
-Ce guide explique comment d?ployer cursor-cli-to-api en production.
+Ce guide explique comment déployer cursor-cli-to-api en production.
 
-## D?ploiement avec Docker
+## 🐳 Déploiement avec Docker
 
-### Pr?requis
+### Prérequis
 
 - Docker et Docker Compose installés
 - Fichier `.env` configuré
 
-### D?ploiement rapide
+### Déploiement rapide
 
 ```bash
 # Construire et démarrer
 docker-compose up -d
 
-# V?rifier les logs
+# Vérifier les logs
 docker-compose logs -f
 
-# Arr?ter
+# Arrêter
 docker-compose down
 ```
 
-### D?ploiement avec le script
+### Déploiement avec le script
 
 ```bash
-# D?ploiement automatique
+# Déploiement automatique
 ./scripts/deploy.sh
 
 # Ou sans build Docker
 DOCKER_BUILD=false ./scripts/deploy.sh
 ```
 
-## D?ploiement manuel
+## 💻 Déploiement manuel
 
 ### Sur un serveur Linux
 
-1. **Installer les dépendances syst?me:**
+1. **Installer les dépendances système:**
    ```bash
    # Installer uv
    curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -58,9 +58,9 @@ DOCKER_BUILD=false ./scripts/deploy.sh
    just install
    ```
 
-4. **D?marrer avec systemd (recommandé):**
+4. **Démarrer avec systemd (recommandé):**
 
-   Cr?er `/etc/systemd/system/cursor-api.service`:
+   Créer `/etc/systemd/system/cursor-api.service`:
    ```ini
    [Unit]
    Description=Cursor Agent API Proxy
@@ -95,11 +95,11 @@ DOCKER_BUILD=false ./scripts/deploy.sh
    pm2 startup
    ```
 
-## D?ploiement avec Nginx (reverse proxy)
+## 🌐 Déploiement avec Nginx (reverse proxy)
 
 ### Configuration Nginx
 
-Cr?er `/etc/nginx/sites-available/cursor-api`:
+Créer `/etc/nginx/sites-available/cursor-api`:
 
 ```nginx
 server {
@@ -139,7 +139,7 @@ sudo certbot --nginx -d api.votredomaine.com
 ### Production
 
 ```env
-# S?curit?
+# Sécurité
 API_KEY=your-secret-api-key-here
 LOG_LEVEL=INFO
 
@@ -152,14 +152,14 @@ CURSOR_AGENT_MODE=http
 CURSOR_AGENT_HTTP_URL=https://cursor-agent.example.com/api
 ```
 
-## Monitoring
+## 📊 Monitoring
 
 ### Health checks
 
-L'endpoint `/health` peut ?tre utilisé pour les health checks:
+L'endpoint `/health` peut être utilisé pour les health checks:
 
 ```bash
-# V?rification simple
+# Vérification simple
 curl http://localhost:8000/health
 
 # Avec le script de test
@@ -168,7 +168,7 @@ curl http://localhost:8000/health
 
 ### Logs
 
-Les logs sont envoy?s vers stdout/stderr. Pour les capturer:
+Les logs sont envoyés vers stdout/stderr. Pour les capturer:
 
 ```bash
 # Avec Docker
@@ -181,7 +181,7 @@ journalctl -u cursor-api -f
 pm2 logs cursor-api
 ```
 
-## S?curit? en production
+## 🔒 Sécurité en production
 
 1. **Activer l'authentification:**
    ```env
@@ -193,7 +193,7 @@ pm2 logs cursor-api
    - Rediriger HTTP vers HTTPS
 
 3. **Rate limiting:**
-   - D?commenter `RateLimitMiddleware` dans `main.py`
+   - Décommenter `RateLimitMiddleware` dans `main.py`
    - Ou utiliser un reverse proxy avec rate limiting (Nginx, Cloudflare)
 
 4. **Firewall:**
@@ -204,20 +204,20 @@ pm2 logs cursor-api
    sudo ufw enable
    ```
 
-5. **Mettre ? jour r?guli?rement:**
+5. **Mettre à jour régulièrement:**
    ```bash
-   # Mettre ? jour les dépendances
+   # Mettre à jour les dépendances
    uv sync --upgrade
    
    # Rebuild Docker
    docker-compose build --no-cache
    ```
 
-## Scaling
+## 📈 Scaling
 
 ### Horizontal scaling
 
-Pour g?rer plusieurs instances:
+Pour gérer plusieurs instances:
 
 1. Utiliser un load balancer (Nginx, HAProxy)
 2. Configurer plusieurs instances avec Docker Compose:
@@ -229,7 +229,7 @@ Pour g?rer plusieurs instances:
          replicas: 3
    ```
 
-3. Utiliser Kubernetes pour un scaling avanc?
+3. Utiliser Kubernetes pour un scaling avancé
 
 ### Vertical scaling
 
@@ -239,14 +239,14 @@ Augmenter les ressources du serveur selon la charge.
 
 ### Configuration
 
-Sauvegarder r?guli?rement:
+Sauvegarder régulièrement:
 - Le fichier `.env`
 - Les logs importants
 - La configuration Nginx/Docker
 
 ### Recovery
 
-En cas de probl?me:
+En cas de problème:
 ```bash
 # Voir les logs
 docker-compose logs
@@ -260,22 +260,22 @@ docker-compose build --no-cache
 docker-compose up -d
 ```
 
-## Troubleshooting
+## 🔧 Troubleshooting
 
 ### Le service ne démarre pas
 
-1. V?rifier les logs: `docker-compose logs` ou `journalctl -u cursor-api`
-2. V?rifier la configuration `.env`
-3. V?rifier que cursor-agent est accessible
+1. Vérifier les logs: `docker-compose logs` ou `journalctl -u cursor-api`
+2. Vérifier la configuration `.env`
+3. Vérifier que cursor-agent est accessible
 
 ### Erreurs 500
 
-1. V?rifier les logs de l'application
-2. V?rifier la connectivit? avec cursor-agent
-3. V?rifier les timeouts
+1. Vérifier les logs de l'application
+2. Vérifier la connectivité avec cursor-agent
+3. Vérifier les timeouts
 
 ### Performance lente
 
 1. Augmenter `CURSOR_AGENT_TIMEOUT` si nécessaire
-2. V?rifier les ressources du serveur
-3. Consid?rer le caching si appropri?
+2. Vérifier les ressources du serveur
+3. Considérer le caching si approprié

@@ -2,27 +2,27 @@
 
 Ce guide explique les aspects de sécurité de cursor-cli-to-api.
 
-## ?? Authentification de l'API Proxy
+## 🔐 Authentification de l'API Proxy
 
 ### Qu'est-ce que API_KEY ?
 
-**`API_KEY` n'est PAS une clé li?e ? cursor-agent ou ? Cursor l'?diteur.**
+**`API_KEY` n'est PAS une clé liée à cursor-agent ou à Cursor l'éditeur.**
 
-C'est une clé que **VOUS g?n?rez** pour prot?ger **votre API proxy FastAPI**. Elle sert ? authentifier les requêtes vers votre serveur proxy.
+C'est une clé que **VOUS générez** pour protéger **votre API proxy FastAPI**. Elle sert à authentifier les requêtes vers votre serveur proxy.
 
 ### Comment ça fonctionne ?
 
-1. **Sans API_KEY (d?veloppement):**
+1. **Sans API_KEY (développement):**
    - N'importe qui peut appeler votre API
    - Utile pour tester localement
-   - ?? Ne jamais utiliser en production sur un serveur accessible publiquement
+   - ⚠️ Ne jamais utiliser en production sur un serveur accessible publiquement
 
 2. **Avec API_KEY (production):**
    - Toutes les requêtes doivent inclure: `Authorization: Bearer <API_KEY>`
-   - Les requêtes sans clé valide sont rejet?es (403)
-   - Prot?ge votre API contre les acc?s non autoris?s
+   - Les requêtes sans clé valide sont rejetées (403)
+   - Protège votre API contre les accès non autorisés
 
-### G?n?rer une clé API s?curis?e
+### Générer une clé API sécurisée
 
 **Avec Python:**
 ```bash
@@ -37,7 +37,7 @@ echo "sk-$(openssl rand -hex 32)"
 **Avec le script de configuration:**
 ```bash
 just setup-env
-# R?pondez "oui" ? "Activer l'authentification par API key?"
+# Répondez "oui" à "Activer l'authentification par API key?"
 ```
 
 ### Utiliser l'API avec authentification
@@ -65,9 +65,9 @@ response = client.chat.completions.create(
 )
 ```
 
-## ?? Authentification de cursor-agent (si nécessaire)
+## 🔑 Authentification de cursor-agent (si nécessaire)
 
-Si cursor-agent lui-m?me nécessite une authentification (token API), c'est diff?rent et doit ?tre g?r? dans les fonctions d'intégration.
+Si cursor-agent lui-même nécessite une authentification (token API), c'est différent et doit être géré dans les fonctions d'intégration.
 
 ### Mode HTTP avec authentification cursor-agent
 
@@ -98,18 +98,18 @@ CURSOR_AGENT_TOKEN=votre-token-cursor-agent
 ```
 
 **Note:** Ne confondez pas:
-- `API_KEY` = Cl? pour prot?ger VOTRE API proxy
+- `API_KEY` = Clé pour protéger VOTRE API proxy
 - `CURSOR_AGENT_TOKEN` = Token pour authentifier les appels vers cursor-agent (si cursor-agent le nécessite)
 
-## ??? Recommandations de sécurité
+## 🛡️ Recommandations de sécurité
 
-### En d?veloppement
+### En développement
 
 ```env
 # Pas d'authentification nécessaire
 API_KEY=
 
-# Logs détaill?s pour le débogage
+# Logs détaillés pour le débogage
 LOG_LEVEL=DEBUG
 ```
 
@@ -139,44 +139,44 @@ RELOAD=false
    ```
 
 3. **Firewall:**
-   - Limitez l'acc?s au port 8000 uniquement aux IPs autoris?es
-   - Utilisez un reverse proxy (Nginx) pour un contr?le plus fin
+   - Limitez l'accès au port 8000 uniquement aux IPs autorisées
+   - Utilisez un reverse proxy (Nginx) pour un contrôle plus fin
 
-4. **Validation des entr?es:**
-   - L'API valide d?j? les entr?es avec Pydantic
+4. **Validation des entrées:**
+   - L'API valide déjà les entrées avec Pydantic
    - Adaptez les validations selon vos besoins
 
 5. **Logs et monitoring:**
-   - Surveillez les logs pour d?tecter les tentatives d'acc?s suspectes
-   - Configurez des alertes en cas d'erreurs r?p?t?es
+   - Surveillez les logs pour détecter les tentatives d'accès suspectes
+   - Configurez des alertes en cas d'erreurs répétées
 
-## ?? Bonnes pratiques
+## ✅ Bonnes pratiques
 
 1. **Ne jamais commiter `.env`:**
-   - Le fichier `.env` est d?j? dans `.gitignore`
+   - Le fichier `.env` est déjà dans `.gitignore`
    - Ne jamais partager vos clés API
 
 2. **Rotation des clés:**
-   - Changez r?guli?rement vos clés API en production
-   - Utilisez des clés diff?rentes pour chaque environnement
+   - Changez régulièrement vos clés API en production
+   - Utilisez des clés différentes pour chaque environnement
 
 3. **Gestion des secrets:**
    - Utilisez un gestionnaire de secrets (HashiCorp Vault, AWS Secrets Manager) en production
    - Ne stockez jamais de secrets dans le code
 
 4. **Limitation des permissions:**
-   - Si cursor-agent nécessite des permissions sp?cifiques, vérifiez-les avant de les accorder
+   - Si cursor-agent nécessite des permissions spécifiques, vérifiez-les avant de les accorder
 
-## ?? D?pannage
+## 🔧 Dépannage
 
 ### Erreur 401/403
 
-- V?rifiez que `API_KEY` est correctement défini dans `.env`
-- V?rifiez que le header `Authorization: Bearer <API_KEY>` est présent
-- V?rifiez qu'il n'y a pas d'espaces dans la clé
+- Vérifiez que `API_KEY` est correctement défini dans `.env`
+- Vérifiez que le header `Authorization: Bearer <API_KEY>` est présent
+- Vérifiez qu'il n'y a pas d'espaces dans la clé
 
 ### L'authentification ne fonctionne pas
 
-- Redémarrez le serveur apr?s modification de `.env`
-- V?rifiez les logs pour voir les erreurs d'authentification
-- V?rifiez que `API_KEY` n'est pas vide si vous essayez de l'utiliser
+- Redémarrez le serveur après modification de `.env`
+- Vérifiez les logs pour voir les erreurs d'authentification
+- Vérifiez que `API_KEY` n'est pas vide si vous essayez de l'utiliser

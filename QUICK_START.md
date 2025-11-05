@@ -2,12 +2,12 @@
 
 Ce guide vous permet de démarrer rapidement avec cursor-cli-to-api.
 
-## ?? D?marrage en 5 minutes
+## 🚀 Démarrage en 5 minutes
 
 ### 1. Installation des dépendances
 
 ```bash
-# Installer uv (si pas d?j? fait)
+# Installer uv (si pas déjà fait)
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Installer les dépendances du projet
@@ -24,7 +24,7 @@ uv sync
 just setup-env
 ```
 
-Le script vous guidera ? travers la configuration.
+Le script vous guidera à travers la configuration.
 
 **Option B - Configuration manuelle:**
 
@@ -54,10 +54,10 @@ CURSOR_AGENT_MODE=http
 CURSOR_AGENT_HTTP_URL=http://localhost:3000/api/chat
 ```
 
-### 3. D?marrer le serveur
+### 3. Démarrer le serveur
 
 ```bash
-# Mode d?veloppement (avec rechargement automatique)
+# Mode développement (avec rechargement automatique)
 just dev
 
 # Ou mode production
@@ -71,7 +71,7 @@ Le serveur sera accessible sur `http://localhost:8000`
 **Dans un nouveau terminal:**
 
 ```bash
-# V?rifier la sant?
+# Vérifier la santé
 curl http://localhost:8000/health
 
 # Tester un chat completion
@@ -85,7 +85,7 @@ curl -X POST http://localhost:8000/v1/chat/completions \
   }'
 ```
 
-### 5. Acc?der ? la documentation
+### 5. Accéder à la documentation
 
 Ouvrez votre navigateur sur:
 - Swagger UI: http://localhost:8000/docs
@@ -96,7 +96,7 @@ Ou utilisez:
 just docs
 ```
 
-## ?? Exemple avec le client OpenAI Python
+## 🔧 Exemple avec le client OpenAI Python
 
 ### Installation
 
@@ -124,7 +124,7 @@ response = client.chat.completions.create(
 print(response.choices[0].message.content)
 ```
 
-### Ex?cuter l'exemple
+### Exécuter l'exemple
 
 ```bash
 just example
@@ -132,9 +132,9 @@ just example
 uv run python example_usage.py
 ```
 
-## ? V?rification
+## ✅ Vérification
 
-V?rifiez que tout fonctionne:
+Vérifiez que tout fonctionne:
 
 ```bash
 # Tests unitaires
@@ -143,15 +143,15 @@ just test
 # Tests d'intégration
 just test-integration
 
-# V?rifier la sant?
+# Vérifier la santé
 just health
 ```
 
-## ?? Probl?mes courants
+## ⚠️ Problèmes courants
 
 ### "cursor-agent not found"
 
-**Solution:** V?rifiez que cursor-agent est dans votre PATH ou configurez `CURSOR_AGENT_CLI_PATH` dans `.env`:
+**Solution:** Vérifiez que cursor-agent est dans votre PATH ou configurez `CURSOR_AGENT_CLI_PATH` dans `.env`:
 
 ```env
 CURSOR_AGENT_CLI_PATH=/chemin/vers/cursor-agent
@@ -159,9 +159,9 @@ CURSOR_AGENT_CLI_PATH=/chemin/vers/cursor-agent
 
 ### "Connection refused" (mode HTTP)
 
-**Solution:** V?rifiez que l'URL dans `CURSOR_AGENT_HTTP_URL` est correcte et que le service cursor-agent est démarré.
+**Solution:** Vérifiez que l'URL dans `CURSOR_AGENT_HTTP_URL` est correcte et que le service cursor-agent est démarré.
 
-### Port d?j? utilisé
+### Port déjà utilisé
 
 **Solution:** Changez le port dans `.env`:
 
@@ -169,16 +169,16 @@ CURSOR_AGENT_CLI_PATH=/chemin/vers/cursor-agent
 PORT=8001
 ```
 
-## ?? Prochaines étapes
+## 📚 Prochaines étapes
 
 - Voir [CONFIGURATION.md](CONFIGURATION.md) pour la configuration détaillée
 - Voir [INTEGRATION.md](INTEGRATION.md) pour adapter l'intégration avec cursor-agent
 - Voir [DEPLOYMENT.md](DEPLOYMENT.md) pour le déploiement en production
 - Voir [NEXT_STEPS.md](NEXT_STEPS.md) pour les améliorations possibles
 
-## ?? Astuces
+## 💡 Astuces
 
 - Utilisez `just` pour toutes les commandes courantes (tapez `just` pour voir la liste)
-- Activez `RELOAD=true` en d?veloppement pour le rechargement automatique
+- Activez `RELOAD=true` en développement pour le rechargement automatique
 - Utilisez `LOG_LEVEL=DEBUG` pour voir plus de détails dans les logs
 - En production, configurez `API_KEY` pour l'authentification
