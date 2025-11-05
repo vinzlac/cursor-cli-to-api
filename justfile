@@ -1,43 +1,43 @@
 # Justfile pour cursor-cli-to-api
-# Command runner moderne pour g?rer les t?ches du projet
+# Command runner moderne pour gérer les tâches du projet
 
 # Affiche l'aide avec toutes les commandes disponibles
 default:
     @just --list
 
-# Installe les d?pendances avec uv
+# Installe les dépendances avec uv
 install:
-    @echo "?? Installation des d?pendances avec uv..."
+    @echo "📦 Installation des dépendances avec uv..."
     uv sync
 
-# D?marre le serveur en mode production
+# Démarre le serveur en mode production
 run:
-    @echo "?? D?marrage du serveur..."
+    @echo "🚀 Démarrage du serveur..."
     uv run uvicorn main:app --host 0.0.0.0 --port 8000
 
-# D?marre le serveur en mode d?veloppement avec reload automatique
+# Démarre le serveur en mode développement avec reload automatique
 dev:
-    @echo "?? D?marrage en mode d?veloppement..."
+    @echo "🔧 Démarrage en mode développement..."
     uv run uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
 # Lance les tests
 test:
-    @echo "?? Lancement des tests..."
+    @echo "🧪 Lancement des tests..."
     uv run pytest
 
 # Lance les tests avec couverture
 test-cov:
-    @echo "?? Lancement des tests avec couverture..."
+    @echo "📊 Lancement des tests avec couverture..."
     uv run pytest --cov=. --cov-report=html --cov-report=term
 
 # Lance les tests en mode watch
 test-watch:
-    @echo "?? Lancement des tests en mode watch..."
-    uv run ptw tests || echo "??  pytest-watch non disponible: uv pip install pytest-watch"
+    @echo "👀 Lancement des tests en mode watch..."
+    uv run ptw tests || echo "⚠️  pytest-watch non disponible: uv pip install pytest-watch"
 
-# Nettoie les fichiers g?n?r?s (cache, venv, etc.)
+# Nettoie les fichiers générés (cache, venv, etc.)
 clean:
-    @echo "?? Nettoyage des fichiers g?n?r?s..."
+    @echo "🧹 Nettoyage des fichiers générés..."
     rm -rf .venv
     rm -rf __pycache__
     rm -rf .pytest_cache
@@ -47,78 +47,79 @@ clean:
     find . -type f -name "*.pyc" -delete
     find . -type f -name "*.pyo" -delete
 
-# Formate le code avec ruff (si install?)
+# Formate le code avec ruff (si installé)
 format:
-    @echo "? Formatage du code..."
-    uv run ruff format . || echo "??  ruff non disponible, utilisez: uv pip install ruff"
+    @echo "✨ Formatage du code..."
+    uv run ruff format . || echo "⚠️  ruff non disponible, utilisez: uv pip install ruff"
 
-# V?rifie le code avec ruff (si install?)
+# Vérifie le code avec ruff (si installé)
 lint:
-    @echo "?? V?rification du code..."
-    uv run ruff check . || echo "??  ruff non disponible, utilisez: uv pip install ruff"
+    @echo "🔍 Vérification du code..."
+    uv run ruff check . || echo "⚠️  ruff non disponible, utilisez: uv pip install ruff"
 
 # Lance format + lint
 check: format lint
-    @echo "? V?rification termin?e"
+    @echo "✅ Vérification terminée"
 
 # Ouvre la documentation API dans le navigateur
 docs:
-    @echo "?? Ouverture de la documentation..."
-    @open http://localhost:8000/docs || xdg-open http://localhost:8000/docs || echo "Serveur non d?marr? ou navigateur non disponible"
+    @echo "📚 Ouverture de la documentation..."
+    @open http://localhost:8000/docs || xdg-open http://localhost:8000/docs || echo "Serveur non démarré ou navigateur non disponible"
 
-# Cr?e un nouvel environnement virtuel
+# Crée un nouvel environnement virtuel
 venv:
-    @echo "?? Cr?ation de l'environnement virtuel..."
+    @echo "🐍 Création de l'environnement virtuel..."
     uv venv
 
 # Affiche les informations sur l'environnement
 info:
-    @echo "?? Informations sur l'environnement:"
-    @echo "Python: $$(uv run python --version)"
-    @echo "uv: $$(uv --version)"
-    @echo "Venv: $$([ -d .venv ] && echo '? Cr??' || echo '? Non cr??')"
+    #!/usr/bin/env bash
+    echo "ℹ️  Informations sur l'environnement:"
+    echo "Python: $(uv run python --version)"
+    echo "uv: $(uv --version)"
+    if [ -d .venv ]; then echo "Venv: ✅ Créé"; else echo "Venv: ❌ Non créé"; fi
 
-# Installe les d?pendances de d?veloppement
+# Installe les dépendances de développement
 install-dev:
-    @echo "?? Installation des d?pendances de d?veloppement..."
+    @echo "🔧 Installation des dépendances de développement..."
     uv sync --dev
 
-# Ex?cute l'exemple d'utilisation
+# Exécute l'exemple d'utilisation
 example:
-    @echo "?? Ex?cution de l'exemple..."
+    @echo "🎯 Exécution de l'exemple..."
     uv run python example_usage.py
 
-# V?rifie que le serveur est accessible
+# Vérifie que le serveur est accessible
 health:
-    @echo "?? V?rification de sant?..."
-    @curl -s http://localhost:8000/health | jq . || echo "? Serveur non accessible"
+    @echo "🏥 Vérification de santé..."
+    @curl -s http://localhost:8000/health | jq . || echo "❌ Serveur non accessible"
 
-# Configure le fichier .env de mani?re interactive
+# Configure le fichier .env de manière interactive
 setup-env:
-    @echo "?? Configuration du fichier .env..."
+    @echo "⚙️  Configuration du fichier .env..."
     @./scripts/setup-env.sh
 
-# Lance les tests d'int?gration
+# Lance les tests d'intégration
 test-integration:
-    @echo "?? Lancement des tests d'int?gration..."
+    @echo "🔗 Lancement des tests d'intégration..."
     @./scripts/test_integration.sh
 
 # Build l'image Docker
 docker-build:
-    @echo "?? Construction de l'image Docker..."
+    @echo "🐳 Construction de l'image Docker..."
     docker build -t cursor-cli-to-api:latest .
 
 # Lance avec Docker Compose
 docker-up:
-    @echo "?? D?marrage avec Docker Compose..."
+    @echo "🚀 Démarrage avec Docker Compose..."
     docker-compose up -d
 
-# Arr?te Docker Compose
+# Arrête Docker Compose
 docker-down:
-    @echo "?? Arr?t de Docker Compose..."
+    @echo "🛑 Arrêt de Docker Compose..."
     docker-compose down
 
 # Voir les logs Docker
 docker-logs:
-    @echo "?? Logs Docker..."
+    @echo "📋 Logs Docker..."
     docker-compose logs -f

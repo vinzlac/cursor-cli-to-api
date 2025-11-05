@@ -164,28 +164,28 @@ async def _call_cursor_agent_http(messages: List[Message]) -> str:
         response.raise_for_status()
         data = response.json()
         
-        # Adapter selon le format de r?ponse de cursor-agent
+        # Adapter selon le format de réponse de cursor-agent
         return data.get("response") or data.get("content") or str(data)
 
 
 async def _call_cursor_agent_library(messages: List[Message]) -> str:
-    """Appel via biblioth?que Python (? impl?menter selon votre biblioth?que)"""
-    # Exemple d'impl?mentation:
+    """Appel via bibliothèque Python (à implémenter selon votre bibliothèque)"""
+    # Exemple d'implémentation:
     # from cursor_agent import CursorAgent
     # agent = CursorAgent()
     # return await agent.chat(messages)
     
     raise NotImplementedError(
-        "Mode library non impl?ment?. "
-        "Modifiez _call_cursor_agent_library() dans main.py pour int?grer votre biblioth?que."
+        "Mode library non implémenté. "
+        "Modifiez _call_cursor_agent_library() dans main.py pour intégrer votre bibliothèque."
     )
 
 
 def count_tokens(text: str) -> int:
     """
-    Compte approximatif des tokens (? am?liorer avec tiktoken si n?cessaire)
+    Compte approximatif des tokens (à améliorer avec tiktoken si nécessaire)
     """
-    # Approximation: 1 token ? 4 caract?res
+    # Approximation: 1 token ≈ 4 caractères
     return len(text) // 4
 
 
@@ -194,11 +194,18 @@ async def chat_completions(request: ChatCompletionRequest):
     """
     Endpoint principal compatible avec l'API OpenAI ChatGPT
     """
+    # Validation: messages ne doit pas être vide
+    if not request.messages:
+        raise HTTPException(
+            status_code=422,
+            detail="Messages list cannot be empty"
+        )
+    
     try:
         # Appeler cursor-agent
         response_content = await call_cursor_agent(request.messages)
         
-        # Construire la r?ponse au format OpenAI
+        # Construire la réponse au format OpenAI
         response_message = Message(role="assistant", content=response_content)
         
         # Calculer les tokens (approximatif)

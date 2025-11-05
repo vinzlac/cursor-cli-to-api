@@ -9,7 +9,7 @@ client = TestClient(app)
 
 
 def test_health_endpoint():
-    """Test de l'endpoint de sant?"""
+    """Test de l'endpoint de santé"""
     response = client.get("/health")
     assert response.status_code == 200
     data = response.json()
@@ -18,7 +18,7 @@ def test_health_endpoint():
 
 
 def test_list_models():
-    """Test de l'endpoint de liste des mod?les"""
+    """Test de l'endpoint de liste des modèles"""
     response = client.get("/v1/models")
     assert response.status_code == 200
     data = response.json()
@@ -48,7 +48,7 @@ def test_chat_completions():
 
 
 def test_chat_completions_with_system_message():
-    """Test avec un message syst?me"""
+    """Test avec un message système"""
     response = client.post(
         "/v1/chat/completions",
         json={
@@ -88,12 +88,12 @@ def test_chat_completions_empty_messages():
             "messages": []
         }
     )
-    # Devrait soit retourner une erreur, soit g?rer gracieusement
-    assert response.status_code in [200, 400, 422]
+    # Devrait retourner une erreur de validation
+    assert response.status_code in [400, 422]
 
 
 def test_chat_completions_invalid_model():
-    """Test avec un mod?le invalide"""
+    """Test avec un modèle invalide"""
     response = client.post(
         "/v1/chat/completions",
         json={
@@ -103,5 +103,5 @@ def test_chat_completions_invalid_model():
             ]
         }
     )
-    # L'API devrait accepter n'importe quel mod?le (comme OpenAI)
+    # L'API devrait accepter n'importe quel modèle (comme OpenAI)
     assert response.status_code == 200
