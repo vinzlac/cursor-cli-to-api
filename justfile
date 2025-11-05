@@ -13,12 +13,12 @@ install:
 # Démarre le serveur en mode production
 run:
     @echo "🚀 Démarrage du serveur..."
-    uv run uvicorn main:app --host 0.0.0.0 --port 8000
+    uv run uvicorn main:app --host 0.0.0.0 --port 8001
 
 # Démarre le serveur en mode développement avec reload automatique
 dev:
     @echo "🔧 Démarrage en mode développement..."
-    uv run uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    uv run uvicorn main:app --host 0.0.0.0 --port 8001 --reload
 
 # Lance les tests
 test:
@@ -64,7 +64,7 @@ check: format lint
 # Ouvre la documentation API dans le navigateur
 docs:
     @echo "📚 Ouverture de la documentation..."
-    @open http://localhost:8000/docs || xdg-open http://localhost:8000/docs || echo "Serveur non démarré ou navigateur non disponible"
+    @open http://localhost:8001/docs || xdg-open http://localhost:8001/docs || echo "Serveur non démarré ou navigateur non disponible"
 
 # Crée un nouvel environnement virtuel
 venv:
@@ -92,7 +92,7 @@ example:
 # Vérifie que le serveur est accessible
 health:
     @echo "🏥 Vérification de santé..."
-    @curl -s http://localhost:8000/health | jq . || echo "❌ Serveur non accessible"
+    @curl -s http://localhost:8001/health | jq . || echo "❌ Serveur non accessible"
 
 # Configure le fichier .env de manière interactive
 setup-env:

@@ -12,7 +12,7 @@ import os
 
 # Configuration du client pour pointer vers votre proxy local
 client = OpenAI(
-    base_url="http://localhost:8000/v1",  # URL de votre proxy
+    base_url="http://localhost:8001/v1",  # URL de votre proxy
     api_key="not-needed"  # Clé non utilisée mais requise par la bibliothèque
 )
 
@@ -99,16 +99,16 @@ def example_list_models():
 
 if __name__ == "__main__":
     print("📘 Exemples d'utilisation du proxy cursor-agent\n")
-    print("Assurez-vous que le serveur est démarré sur http://localhost:8000\n")
+    print("Assurez-vous que le serveur est démarré sur http://localhost:8001\n")
     
     try:
         # Décommenter les exemples que vous voulez tester
-        # example_basic_chat()
+        example_basic_chat()
         # example_streaming()
         # example_multiple_turns()
-        # example_list_models()
+        example_list_models()
         
-        print("\n💡 Pour tester, décommentez les exemples dans le code!")
+        print("\n✅ Exemples terminés avec succès!")
         
     except Exception as e:
         print(f"❌ Erreur: {e}")
