@@ -1,4 +1,4 @@
-# Guide de d?ploiement
+# Guide de déploiement
 
 Ce guide explique comment d?ployer cursor-cli-to-api en production.
 
@@ -6,13 +6,13 @@ Ce guide explique comment d?ployer cursor-cli-to-api en production.
 
 ### Pr?requis
 
-- Docker et Docker Compose install?s
-- Fichier `.env` configur?
+- Docker et Docker Compose installés
+- Fichier `.env` configuré
 
 ### D?ploiement rapide
 
 ```bash
-# Construire et d?marrer
+# Construire et démarrer
 docker-compose up -d
 
 # V?rifier les logs
@@ -36,12 +36,12 @@ DOCKER_BUILD=false ./scripts/deploy.sh
 
 ### Sur un serveur Linux
 
-1. **Installer les d?pendances syst?me:**
+1. **Installer les dépendances syst?me:**
    ```bash
    # Installer uv
    curl -LsSf https://astral.sh/uv/install.sh | sh
    
-   # Installer just (optionnel mais recommand?)
+   # Installer just (optionnel mais recommandé)
    curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash
    ```
 
@@ -50,15 +50,15 @@ DOCKER_BUILD=false ./scripts/deploy.sh
    git clone <repository>
    cd cursor-cli-to-api
    cp .env.example .env
-   # ?diter .env
+   # éditer .env
    ```
 
-3. **Installer les d?pendances:**
+3. **Installer les dépendances:**
    ```bash
    just install
    ```
 
-4. **D?marrer avec systemd (recommand?):**
+4. **D?marrer avec systemd (recommandé):**
 
    Cr?er `/etc/systemd/system/cursor-api.service`:
    ```ini
@@ -156,7 +156,7 @@ CURSOR_AGENT_HTTP_URL=https://cursor-agent.example.com/api
 
 ### Health checks
 
-L'endpoint `/health` peut ?tre utilis? pour les health checks:
+L'endpoint `/health` peut ?tre utilisé pour les health checks:
 
 ```bash
 # V?rification simple
@@ -198,7 +198,7 @@ pm2 logs cursor-api
 
 4. **Firewall:**
    ```bash
-   # Autoriser uniquement les ports n?cessaires
+   # Autoriser uniquement les ports nécessaires
    sudo ufw allow 80/tcp
    sudo ufw allow 443/tcp
    sudo ufw enable
@@ -206,7 +206,7 @@ pm2 logs cursor-api
 
 5. **Mettre ? jour r?guli?rement:**
    ```bash
-   # Mettre ? jour les d?pendances
+   # Mettre ? jour les dépendances
    uv sync --upgrade
    
    # Rebuild Docker
@@ -251,7 +251,7 @@ En cas de probl?me:
 # Voir les logs
 docker-compose logs
 
-# Red?marrer
+# Redémarrer
 docker-compose restart
 
 # Ou rebuild complet
@@ -262,7 +262,7 @@ docker-compose up -d
 
 ## Troubleshooting
 
-### Le service ne d?marre pas
+### Le service ne démarre pas
 
 1. V?rifier les logs: `docker-compose logs` ou `journalctl -u cursor-api`
 2. V?rifier la configuration `.env`
@@ -276,6 +276,6 @@ docker-compose up -d
 
 ### Performance lente
 
-1. Augmenter `CURSOR_AGENT_TIMEOUT` si n?cessaire
+1. Augmenter `CURSOR_AGENT_TIMEOUT` si nécessaire
 2. V?rifier les ressources du serveur
 3. Consid?rer le caching si appropri?

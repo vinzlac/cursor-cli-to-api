@@ -1,36 +1,36 @@
-# Prochaines ?tapes
+# Prochaines étapes
 
 ## ? Ce qui est fait
 
 - [x] Structure du projet avec FastAPI
 - [x] API compatible OpenAI/ChatGPT
 - [x] Configuration avec variables d'environnement
-- [x] Support de 3 modes d'int?gration (CLI, HTTP, Library)
+- [x] Support de 3 modes d'intégration (CLI, HTTP, Library)
 - [x] Gestion d'erreurs et logging
 - [x] Tests de base
-- [x] Documentation compl?te
+- [x] Documentation complète
 - [x] Utilisation de `uv` et `just` (outils modernes)
 
 ## ?? ? faire maintenant
 
-### 1. Configurer l'int?gration avec cursor-agent
+### 1. Configurer l'intégration avec cursor-agent
 
 **Copier le fichier d'exemple de configuration:**
 ```bash
 cp .env.example .env
 ```
 
-**?diter `.env` selon votre configuration:**
+**éditer `.env` selon votre configuration:**
 - Si cursor-agent est un CLI: `CURSOR_AGENT_MODE=cli`
 - Si cursor-agent expose une API: `CURSOR_AGENT_MODE=http` + `CURSOR_AGENT_HTTP_URL=...`
 - Si cursor-agent est une biblioth?que Python: `CURSOR_AGENT_MODE=library`
 
-Voir `INTEGRATION.md` pour les d?tails.
+Voir `INTEGRATION.md` pour les détails.
 
 ### 2. Tester l'installation
 
 ```bash
-# Installer les d?pendances
+# Installer les dépendances
 just install
 
 # Lancer les tests
@@ -40,7 +40,7 @@ just test
 just dev
 ```
 
-### 3. Adapter les fonctions d'int?gration
+### 3. Adapter les fonctions d'intégration
 
 Dans `main.py`, adapter les fonctions selon votre configuration:
 - `_call_cursor_agent_cli()` - pour le mode CLI
@@ -73,25 +73,25 @@ just example
 - [ ] Support de plusieurs instances cursor-agent (load balancing)
 
 ### Long terme
-- [ ] Cache des r?ponses
-- [ ] Webhooks pour les r?ponses asynchrones
+- [ ] Cache des réponses
+- [ ] Webhooks pour les réponses asynchrones
 - [ ] Interface web de gestion
 - [ ] Support de plusieurs mod?les cursor-agent
 
 ## ?? Ressources
 
-- [Guide d'int?gration](INTEGRATION.md) - Comment int?grer avec cursor-agent
+- [Guide d'intégration](INTEGRATION.md) - Comment int?grer avec cursor-agent
 - [README](README.md) - Documentation principale
 - [FastAPI Documentation](https://fastapi.tiangolo.com/)
 - [OpenAI API Reference](https://platform.openai.com/docs/api-reference)
 
-## ?? Questions fr?quentes
+## ?? Questions fréquentes
 
 **Q: Comment savoir quel mode utiliser?**
-R: V?rifiez comment cursor-agent est install? dans votre environnement. CLI si c'est un ex?cutable, HTTP si c'est un service web, Library si c'est un package Python.
+R: V?rifiez comment cursor-agent est installé dans votre environnement. CLI si c'est un exécutable, HTTP si c'est un service web, Library si c'est un package Python.
 
-**Q: Le serveur d?marre mais retourne des erreurs**
+**Q: Le serveur démarre mais retourne des erreurs**
 R: V?rifiez les logs et la configuration dans `.env`. Assurez-vous que cursor-agent est accessible et que les chemins/URLs sont corrects.
 
-**Q: Comment d?boguer?**
-R: Activez le logging d?taill? avec `LOG_LEVEL=DEBUG` dans `.env` et v?rifiez les logs du serveur.
+**Q: Comment déboguer?**
+R: Activez le logging détaill? avec `LOG_LEVEL=DEBUG` dans `.env` et vérifiez les logs du serveur.

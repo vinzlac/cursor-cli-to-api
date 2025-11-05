@@ -1,10 +1,10 @@
-# Guide d'int?gration avec cursor-agent
+# Guide d'intégration avec cursor-agent
 
 Ce guide explique comment int?grer ce proxy avec cursor-agent selon diff?rents modes d'utilisation.
 
-## Modes d'int?gration
+## Modes d'intégration
 
-### Mode CLI (recommand? pour commencer)
+### Mode CLI (recommandé pour commencer)
 
 Si cursor-agent est disponible en ligne de commande:
 
@@ -18,11 +18,11 @@ Si cursor-agent est disponible en ligne de commande:
 2. **Configurer dans `.env`:**
    ```env
    CURSOR_AGENT_MODE=cli
-   CURSOR_AGENT_CLI_PATH=cursor-agent  # ou le chemin complet si n?cessaire
+   CURSOR_AGENT_CLI_PATH=cursor-agent  # ou le chemin complet si nécessaire
    CURSOR_AGENT_TIMEOUT=60
    ```
 
-3. **Adapter la fonction `_call_cursor_agent_cli()` si n?cessaire:**
+3. **Adapter la fonction `_call_cursor_agent_cli()` si nécessaire:**
    
    Si cursor-agent attend un format sp?cifique, modifiez `main.py`:
    ```python
@@ -55,7 +55,7 @@ Si cursor-agent expose une API HTTP:
    CURSOR_AGENT_TIMEOUT=60
    ```
 
-2. **Adapter la fonction `_call_cursor_agent_http()` si n?cessaire:**
+2. **Adapter la fonction `_call_cursor_agent_http()` si nécessaire:**
    
    Modifiez `main.py` pour correspondre au format de l'API cursor-agent:
    ```python
@@ -74,7 +74,7 @@ Si cursor-agent expose une API HTTP:
            response.raise_for_status()
            data = response.json()
            
-           # Adapter selon le format de r?ponse
+           # Adapter selon le format de réponse
            return data.get("result") or data.get("output") or str(data)
    ```
 
@@ -109,7 +109,7 @@ Si cursor-agent est disponible comme biblioth?que Python:
        return result
    ```
 
-## Test de l'int?gration
+## Test de l'intégration
 
 1. **D?marrer le serveur:**
    ```bash
@@ -129,25 +129,25 @@ Si cursor-agent est disponible comme biblioth?que Python:
    ```
 
 3. **V?rifier les logs:**
-   Les logs devraient indiquer le mode utilis? et les erreurs ?ventuelles.
+   Les logs devraient indiquer le mode utilisé et les erreurs ?ventuelles.
 
 ## D?pannage
 
-### Erreur: "cursor-agent n'est pas trouv?"
+### Erreur: "cursor-agent n'est pas trouvé"
 - V?rifiez que cursor-agent est dans votre PATH
-- Ou d?finissez `CURSOR_AGENT_CLI_PATH` avec le chemin complet
+- Ou définissez `CURSOR_AGENT_CLI_PATH` avec le chemin complet
 
 ### Erreur: "Timeout"
 - Augmentez `CURSOR_AGENT_TIMEOUT` dans `.env`
-- V?rifiez que cursor-agent r?pond correctement
+- V?rifiez que cursor-agent répond correctement
 
-### Erreur: "Format de r?ponse invalide"
+### Erreur: "Format de réponse invalide"
 - Adaptez les fonctions `_call_cursor_agent_*()` pour correspondre au format r?el
-- V?rifiez les logs pour voir la r?ponse brute
+- V?rifiez les logs pour voir la réponse brute
 
 ## Exemples de configuration
 
-### Exemple 1: CLI avec chemin personnalis?
+### Exemple 1: CLI avec chemin personnalisé
 ```env
 CURSOR_AGENT_MODE=cli
 CURSOR_AGENT_CLI_PATH=/usr/local/bin/cursor-agent

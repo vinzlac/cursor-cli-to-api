@@ -4,14 +4,14 @@ Proxy FastAPI pour cursor-agent compatible avec l'API OpenAI/ChatGPT.
 
 ## ?? Objectif
 
-Ce projet permet d'exposer cursor-agent via une API REST compatible avec l'API OpenAI, permettant ainsi d'utiliser cursor-agent avec n'importe quel client compatible OpenAI (comme les biblioth?ques `openai` en Python, JavaScript, etc.).
+Ce projet permet d'exposer cursor-agent via une API REST compatible avec l'API OpenAI, permettant ainsi d'utiliser cursor-agent avec n'importe quel client compatible OpenAI (comme les bibliothèques `openai` en Python, JavaScript, etc.).
 
 ## ?? Pr?requis
 
 - Python 3.8+
 - [uv](https://github.com/astral-sh/uv) (gestionnaire de paquets moderne)
 - [just](https://github.com/casey/just) (command runner moderne)
-- cursor-agent install? et accessible
+- cursor-agent installé et accessible
 
 ### Installer uv
 
@@ -41,10 +41,10 @@ cargo install just
 
 ## ?? Installation
 
-**M?thode recommand?e (avec uv sync):**
+**M?thode recommandée (avec uv sync):**
 
 ```bash
-# Cr?e automatiquement le venv et installe toutes les d?pendances
+# Cr?e automatiquement le venv et installe toutes les dépendances
 uv sync
 # ou
 just install
@@ -61,7 +61,7 @@ source .venv/bin/activate  # Sur macOS/Linux
 # ou
 .venv\Scripts\activate  # Sur Windows
 
-# Installer les d?pendances
+# Installer les dépendances
 uv pip install -e .
 ```
 
@@ -69,7 +69,7 @@ uv pip install -e .
 
 ### D?marrer le serveur
 
-**Avec just (recommand? pour les commandes):**
+**Avec just (recommandé pour les commandes):**
 
 ```bash
 just dev   # Mode d?veloppement avec reload
@@ -77,13 +77,13 @@ just run    # Mode production
 just        # Voir toutes les commandes disponibles
 ```
 
-**Avec uv (recommand? - pas besoin d'activer le venv):**
+**Avec uv (recommandé - pas besoin d'activer le venv):**
 
 ```bash
 uv run python main.py
 ```
 
-**Ou avec le script de d?marrage:**
+**Ou avec le script de démarrage:**
 
 ```bash
 ./run.sh
@@ -115,7 +115,7 @@ Le serveur sera accessible sur `http://localhost:8000`
 
 ### Documentation API
 
-Une fois le serveur d?marr?, acc?dez ?:
+Une fois le serveur démarré, accédez ?:
 - Swagger UI: `http://localhost:8000/docs`
 - ReDoc: `http://localhost:8000/redoc`
 
@@ -136,7 +136,7 @@ Endpoint principal compatible avec l'API OpenAI.
   "model": "cursor-agent",
   "messages": [
     {"role": "system", "content": "Tu es un assistant utile."},
-    {"role": "user", "content": "Bonjour, comment ?a va?"}
+    {"role": "user", "content": "Bonjour, comment ça va?"}
   ],
   "temperature": 0.7,
   "max_tokens": 1000
@@ -198,7 +198,7 @@ just setup-env
 # Copier le fichier d'exemple
 cp .env.example .env
 
-# ?diter avec votre ?diteur pr?f?r?
+# éditer avec votre ?diteur préféré
 nano .env
 # ou
 code .env
@@ -212,24 +212,24 @@ code .env
    - `library` : Utilise cursor-agent comme biblioth?que Python
 
 2. **Selon le mode choisi:**
-   - **CLI**: `CURSOR_AGENT_CLI_PATH` (chemin vers l'ex?cutable)
+   - **CLI**: `CURSOR_AGENT_CLI_PATH` (chemin vers l'exécutable)
    - **HTTP**: `CURSOR_AGENT_HTTP_URL` (URL de l'API)
 
 3. **S?curit? (production):**
-   - `API_KEY` : Cl? API pour prot?ger VOTRE API proxy (g?n?r?e par vous, pas li?e ? cursor-agent)
+   - `API_KEY` : Cl? API pour prot?ger VOTRE API proxy (générée par vous, pas li?e ? cursor-agent)
    
-   ? **Important:** `API_KEY` prot?ge votre API proxy, pas cursor-agent. Si cursor-agent n?cessite une authentification, voir `SECURITY.md`.
+   ? **Important:** `API_KEY` prot?ge votre API proxy, pas cursor-agent. Si cursor-agent nécessite une authentification, voir `SECURITY.md`.
 
-Voir [CONFIGURATION.md](CONFIGURATION.md) pour le guide complet de configuration et [INTEGRATION.md](INTEGRATION.md) pour les d?tails sur l'int?gration avec cursor-agent.
+Voir [CONFIGURATION.md](CONFIGURATION.md) pour le guide complet de configuration et [INTEGRATION.md](INTEGRATION.md) pour les détails sur l'intégration avec cursor-agent.
 
 ### Adapter l'appel ? cursor-agent
 
-Dans le fichier `main.py`, les fonctions d'int?gration peuvent ?tre adapt?es:
+Dans le fichier `main.py`, les fonctions d'intégration peuvent ?tre adaptées:
 - `_call_cursor_agent_cli()` - pour le mode CLI
 - `_call_cursor_agent_http()` - pour le mode HTTP  
 - `_call_cursor_agent_library()` - pour le mode Library
 
-Voir `INTEGRATION.md` pour les d?tails.
+Voir `INTEGRATION.md` pour les détails.
 
 ## ?? Exemple d'utilisation avec le client OpenAI Python
 
@@ -249,7 +249,7 @@ from openai import OpenAI
 # Configurer le client pour pointer vers votre proxy
 client = OpenAI(
     base_url="http://localhost:8000/v1",
-    api_key="not-needed"  # Non utilis? mais requis par la lib
+    api_key="not-needed"  # Non utilisé mais requis par la lib
 )
 
 # Utiliser comme avec OpenAI
@@ -274,13 +274,13 @@ uv run python example_usage.py
 ## ?? S?curit?
 
 Pour la production, ajoutez:
-- Authentification (API keys) - configur? via `API_KEY` dans `.env`
+- Authentification (API keys) - configuré via `API_KEY` dans `.env`
 - Rate limiting - middleware disponible (d?commenter dans `main.py`)
 - Validation suppl?mentaire des entr?es
 - Logging et monitoring
 - HTTPS/TLS
 
-Voir `DEPLOYMENT.md` pour les d?tails sur le d?ploiement s?curis?.
+Voir `DEPLOYMENT.md` pour les détails sur le déploiement s?curis?.
 
 ## ?? Notes
 
@@ -295,14 +295,14 @@ Voir `DEPLOYMENT.md` pour les d?tails sur le d?ploiement s?curis?.
 just
 
 # Installation et d?veloppement
-just install          # Installer les d?pendances
+just install          # Installer les dépendances
 just dev              # Mode d?veloppement avec reload
 just run              # Mode production
 
 # Tests
 just test             # Lancer les tests
 just test-cov         # Tests avec couverture
-just test-integration # Tests d'int?gration complets
+just test-integration # Tests d'intégration complets
 
 # Qualit? de code
 just format           # Formater le code
@@ -325,12 +325,12 @@ just docs             # Ouvrir la documentation
 
 ## ?? Documentation compl?mentaire
 
-- [Guide de d?marrage rapide](QUICK_START.md) - D?marrage en 5 minutes
-- [Guide de configuration](CONFIGURATION.md) - Configuration d?taill?e du .env
-- [Guide d'int?gration](INTEGRATION.md) - Comment int?grer avec cursor-agent
-- [Guide de s?curit?](SECURITY.md) - Authentification et s?curit?
-- [Guide de d?ploiement](DEPLOYMENT.md) - D?ploiement en production
-- [Prochaines ?tapes](NEXT_STEPS.md) - Checklist et am?liorations
+- [Guide de démarrage rapide](QUICK_START.md) - D?marrage en 5 minutes
+- [Guide de configuration](CONFIGURATION.md) - Configuration détaillée du .env
+- [Guide d'intégration](INTEGRATION.md) - Comment int?grer avec cursor-agent
+- [Guide de sécurité](SECURITY.md) - Authentification et sécurité
+- [Guide de déploiement](DEPLOYMENT.md) - D?ploiement en production
+- [Prochaines étapes](NEXT_STEPS.md) - Checklist et améliorations
 
 ## ?? Contribution
 

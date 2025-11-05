@@ -1,16 +1,16 @@
-# Guide de s?curit?
+# Guide de sécurité
 
-Ce guide explique les aspects de s?curit? de cursor-cli-to-api.
+Ce guide explique les aspects de sécurité de cursor-cli-to-api.
 
 ## ?? Authentification de l'API Proxy
 
 ### Qu'est-ce que API_KEY ?
 
-**`API_KEY` n'est PAS une cl? li?e ? cursor-agent ou ? Cursor l'?diteur.**
+**`API_KEY` n'est PAS une clé li?e ? cursor-agent ou ? Cursor l'?diteur.**
 
-C'est une cl? que **VOUS g?n?rez** pour prot?ger **votre API proxy FastAPI**. Elle sert ? authentifier les requ?tes vers votre serveur proxy.
+C'est une clé que **VOUS g?n?rez** pour prot?ger **votre API proxy FastAPI**. Elle sert ? authentifier les requêtes vers votre serveur proxy.
 
-### Comment ?a fonctionne ?
+### Comment ça fonctionne ?
 
 1. **Sans API_KEY (d?veloppement):**
    - N'importe qui peut appeler votre API
@@ -18,11 +18,11 @@ C'est une cl? que **VOUS g?n?rez** pour prot?ger **votre API proxy FastAPI**. El
    - ?? Ne jamais utiliser en production sur un serveur accessible publiquement
 
 2. **Avec API_KEY (production):**
-   - Toutes les requ?tes doivent inclure: `Authorization: Bearer <API_KEY>`
-   - Les requ?tes sans cl? valide sont rejet?es (403)
+   - Toutes les requêtes doivent inclure: `Authorization: Bearer <API_KEY>`
+   - Les requêtes sans clé valide sont rejet?es (403)
    - Prot?ge votre API contre les acc?s non autoris?s
 
-### G?n?rer une cl? API s?curis?e
+### G?n?rer une clé API s?curis?e
 
 **Avec Python:**
 ```bash
@@ -65,13 +65,13 @@ response = client.chat.completions.create(
 )
 ```
 
-## ?? Authentification de cursor-agent (si n?cessaire)
+## ?? Authentification de cursor-agent (si nécessaire)
 
-Si cursor-agent lui-m?me n?cessite une authentification (token API), c'est diff?rent et doit ?tre g?r? dans les fonctions d'int?gration.
+Si cursor-agent lui-m?me nécessite une authentification (token API), c'est diff?rent et doit ?tre g?r? dans les fonctions d'intégration.
 
 ### Mode HTTP avec authentification cursor-agent
 
-Si cursor-agent n?cessite un token, modifiez `_call_cursor_agent_http()` dans `main.py`:
+Si cursor-agent nécessite un token, modifiez `_call_cursor_agent_http()` dans `main.py`:
 
 ```python
 async def _call_cursor_agent_http(messages: List[Message]) -> str:
@@ -93,30 +93,30 @@ async def _call_cursor_agent_http(messages: List[Message]) -> str:
 
 Puis ajoutez dans `.env`:
 ```env
-# Token pour authentifier les appels vers cursor-agent (si n?cessaire)
+# Token pour authentifier les appels vers cursor-agent (si nécessaire)
 CURSOR_AGENT_TOKEN=votre-token-cursor-agent
 ```
 
 **Note:** Ne confondez pas:
 - `API_KEY` = Cl? pour prot?ger VOTRE API proxy
-- `CURSOR_AGENT_TOKEN` = Token pour authentifier les appels vers cursor-agent (si cursor-agent le n?cessite)
+- `CURSOR_AGENT_TOKEN` = Token pour authentifier les appels vers cursor-agent (si cursor-agent le nécessite)
 
-## ??? Recommandations de s?curit?
+## ??? Recommandations de sécurité
 
 ### En d?veloppement
 
 ```env
-# Pas d'authentification n?cessaire
+# Pas d'authentification nécessaire
 API_KEY=
 
-# Logs d?taill?s pour le d?bogage
+# Logs détaill?s pour le débogage
 LOG_LEVEL=DEBUG
 ```
 
 ### En production
 
 ```env
-# Authentification activ?e
+# Authentification activée
 API_KEY=sk-generate-a-secure-random-key-here
 
 # Logs standards
@@ -126,7 +126,7 @@ LOG_LEVEL=INFO
 RELOAD=false
 ```
 
-### Autres mesures de s?curit?
+### Autres mesures de sécurité
 
 1. **HTTPS/TLS:**
    - Utilisez HTTPS en production (avec Nginx + Let's Encrypt)
@@ -154,29 +154,29 @@ RELOAD=false
 
 1. **Ne jamais commiter `.env`:**
    - Le fichier `.env` est d?j? dans `.gitignore`
-   - Ne jamais partager vos cl?s API
+   - Ne jamais partager vos clés API
 
-2. **Rotation des cl?s:**
-   - Changez r?guli?rement vos cl?s API en production
-   - Utilisez des cl?s diff?rentes pour chaque environnement
+2. **Rotation des clés:**
+   - Changez r?guli?rement vos clés API en production
+   - Utilisez des clés diff?rentes pour chaque environnement
 
 3. **Gestion des secrets:**
    - Utilisez un gestionnaire de secrets (HashiCorp Vault, AWS Secrets Manager) en production
    - Ne stockez jamais de secrets dans le code
 
 4. **Limitation des permissions:**
-   - Si cursor-agent n?cessite des permissions sp?cifiques, v?rifiez-les avant de les accorder
+   - Si cursor-agent nécessite des permissions sp?cifiques, vérifiez-les avant de les accorder
 
 ## ?? D?pannage
 
 ### Erreur 401/403
 
-- V?rifiez que `API_KEY` est correctement d?fini dans `.env`
-- V?rifiez que le header `Authorization: Bearer <API_KEY>` est pr?sent
-- V?rifiez qu'il n'y a pas d'espaces dans la cl?
+- V?rifiez que `API_KEY` est correctement défini dans `.env`
+- V?rifiez que le header `Authorization: Bearer <API_KEY>` est présent
+- V?rifiez qu'il n'y a pas d'espaces dans la clé
 
 ### L'authentification ne fonctionne pas
 
-- Red?marrez le serveur apr?s modification de `.env`
+- Redémarrez le serveur apr?s modification de `.env`
 - V?rifiez les logs pour voir les erreurs d'authentification
 - V?rifiez que `API_KEY` n'est pas vide si vous essayez de l'utiliser
