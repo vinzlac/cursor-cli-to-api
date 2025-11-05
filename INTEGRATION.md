@@ -82,7 +82,7 @@ Si cursor-agent expose une API HTTP:
 
 Si cursor-agent est disponible comme bibliothèque Python:
 
-1. **Installer la biblioth?que cursor-agent:**
+1. **Installer la bibliothèque cursor-agent:**
    ```bash
    uv pip install cursor-agent
    # ou selon le nom du package
@@ -100,7 +100,7 @@ Si cursor-agent est disponible comme bibliothèque Python:
        
        agent = CursorAgent()
        
-       # Adapter selon l'API de la biblioth?que
+       # Adapter selon l'API de la bibliothèque
        result = await agent.process_messages([
            {"role": msg.role, "content": msg.content}
            for msg in messages

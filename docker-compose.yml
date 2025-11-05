@@ -15,7 +15,7 @@ services:
       - PORT=8000
       - RELOAD=false
     volumes:
-      # Optionnel: monter le code pour le d?veloppement
+      # Optionnel: monter le code pour le développement
       # - .:/app
     env_file:
       - .env

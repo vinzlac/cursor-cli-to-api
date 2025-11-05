@@ -1,11 +1,11 @@
 #!/bin/bash
-# Script de test d'int?gration pour v?rifier que l'API fonctionne correctement
+# Script de test d'intégration pour vérifier que l'API fonctionne correctement
 
 set -e
 
 API_URL="${API_URL:-http://localhost:8000}"
 
-echo "?? Tests d'int?gration de l'API cursor-agent"
+echo "🧪 Tests d'intégration de l'API cursor-agent"
 echo "=============================================="
 echo ""
 
@@ -13,20 +13,20 @@ echo ""
 echo "1. Test du health check..."
 HEALTH_RESPONSE=$(curl -s "${API_URL}/health")
 if echo "$HEALTH_RESPONSE" | grep -q "ok"; then
-    echo "? Health check r?ussi"
+    echo "✅ Health check réussi"
 else
-    echo "? Health check ?chou?"
+    echo "❌ Health check échoué"
     exit 1
 fi
 echo ""
 
-# Test 2: Liste des mod?les
-echo "2. Test de la liste des mod?les..."
+# Test 2: Liste des modèles
+echo "2. Test de la liste des modèles..."
 MODELS_RESPONSE=$(curl -s "${API_URL}/v1/models")
 if echo "$MODELS_RESPONSE" | grep -q "cursor-agent"; then
-    echo "? Liste des mod?les OK"
+    echo "✅ Liste des modèles OK"
 else
-    echo "? Liste des mod?les ?chou?e"
+    echo "❌ Liste des modèles échouée"
     exit 1
 fi
 echo ""
@@ -43,23 +43,23 @@ CHAT_RESPONSE=$(curl -s -X POST "${API_URL}/v1/chat/completions" \
     }')
 
 if echo "$CHAT_RESPONSE" | grep -q "choices"; then
-    echo "? Chat completion r?ussi"
-    echo "R?ponse: $(echo "$CHAT_RESPONSE" | grep -o '"content":"[^"]*"')"
+    echo "✅ Chat completion réussi"
+    echo "Réponse: $(echo "$CHAT_RESPONSE" | grep -o '"content":"[^"]*"')"
 else
-    echo "? Chat completion ?chou?"
-    echo "R?ponse: $CHAT_RESPONSE"
+    echo "❌ Chat completion échoué"
+    echo "Réponse: $CHAT_RESPONSE"
     exit 1
 fi
 echo ""
 
-# Test 4: V?rification du format de r?ponse OpenAI
-echo "4. V?rification du format OpenAI..."
+# Test 4: Vérification du format de réponse OpenAI
+echo "4. Vérification du format OpenAI..."
 if echo "$CHAT_RESPONSE" | grep -q '"object":"chat.completion"'; then
-    echo "? Format OpenAI compatible"
+    echo "✅ Format OpenAI compatible"
 else
-    echo "??  Format peut ne pas ?tre compatible OpenAI"
+    echo "⚠️  Format peut ne pas être compatible OpenAI"
 fi
 echo ""
 
 echo "=============================================="
-echo "? Tous les tests d'int?gration sont pass?s!"
+echo "✅ Tous les tests d'intégration sont passés!"

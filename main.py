@@ -33,12 +33,12 @@ app = FastAPI(
 app.add_middleware(LoggingMiddleware)
 if settings.api_key:
     app.add_middleware(AuthMiddleware)
-    logger.info("Authentification activ?e via API key")
-# Rate limiting optionnel (d?commenter si n?cessaire)
+    logger.info("Authentification activée via API key")
+# Rate limiting optionnel (décommenter si nécessaire)
 # app.add_middleware(RateLimitMiddleware, requests_per_minute=60)
 
 
-# Mod?les Pydantic pour l'API OpenAI-compatible
+# Modèles Pydantic pour l'API OpenAI-compatible
 class Message(BaseModel):
     role: str  # "system", "user", "assistant"
     content: str
@@ -92,10 +92,10 @@ async def call_cursor_agent(messages: List[Message]) -> str:
     Supporte trois modes:
     - cli: Appel via ligne de commande
     - http: Appel via API HTTP
-    - library: Appel via biblioth?que Python (? impl?menter)
+    - library: Appel via bibliothèque Python (à implémenter)
     """
     mode = settings.cursor_agent_mode.lower()
-    logger.info(f"Appel ? cursor-agent en mode: {mode}")
+    logger.info(f"Appel à cursor-agent en mode: {mode}")
     
     # Convertir les messages en format attendu
     prompt = "\n".join([f"{msg.role}: {msg.content}" for msg in messages])
@@ -108,22 +108,22 @@ async def call_cursor_agent(messages: List[Message]) -> str:
         elif mode == "library":
             return await _call_cursor_agent_library(messages)
         else:
-            # Mode simulation par d?faut pour les tests
+            # Mode simulation par défaut pour les tests
             logger.warning(f"Mode '{mode}' non reconnu, utilisation du mode simulation")
             await asyncio.sleep(0.1)
-            return f"R?ponse simul?e de cursor-agent pour: {prompt[:50]}..."
+            return f"Réponse simulée de cursor-agent pour: {prompt[:50]}..."
             
     except subprocess.TimeoutExpired:
-        logger.error("Timeout lors de l'appel ? cursor-agent")
+        logger.error("Timeout lors de l'appel à cursor-agent")
         raise HTTPException(
             status_code=504,
-            detail=f"Timeout lors de l'appel ? cursor-agent (>{settings.cursor_agent_timeout}s)"
+            detail=f"Timeout lors de l'appel à cursor-agent (>{settings.cursor_agent_timeout}s)"
         )
     except Exception as e:
-        logger.error(f"Erreur lors de l'appel ? cursor-agent: {str(e)}")
+        logger.error(f"Erreur lors de l'appel à cursor-agent: {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail=f"Erreur lors de l'appel ? cursor-agent: {str(e)}"
+            detail=f"Erreur lors de l'appel à cursor-agent: {str(e)}"
         )
 
 
@@ -131,7 +131,7 @@ async def _call_cursor_agent_cli(prompt: str) -> str:
     """Appel via CLI"""
     cli_path = settings.cursor_agent_cli_path or "cursor-agent"
     
-    # Ex?cuter dans un thread pour ne pas bloquer l'event loop
+    # Exécuter dans un thread pour ne pas bloquer l'event loop
     loop = asyncio.get_event_loop()
     result = await loop.run_in_executor(
         None,
@@ -144,7 +144,7 @@ async def _call_cursor_agent_cli(prompt: str) -> str:
     )
     
     if result.returncode != 0:
-        raise RuntimeError(f"cursor-agent a retourn? le code {result.returncode}: {result.stderr}")
+        raise RuntimeError(f"cursor-agent a retourné le code {result.returncode}: {result.stderr}")
     
     return result.stdout.strip()
 
@@ -152,7 +152,7 @@ async def _call_cursor_agent_cli(prompt: str) -> str:
 async def _call_cursor_agent_http(messages: List[Message]) -> str:
     """Appel via API HTTP"""
     if not settings.cursor_agent_http_url:
-        raise ValueError("CURSOR_AGENT_HTTP_URL doit ?tre d?fini pour le mode HTTP")
+        raise ValueError("CURSOR_AGENT_HTTP_URL doit être défini pour le mode HTTP")
     
     url = settings.cursor_agent_http_url
     payload = {
@@ -249,7 +249,7 @@ async def chat_completions_stream(request: ChatCompletionRequest):
             chunk_id = f"chatcmpl-{uuid.uuid4().hex[:12]}"
             created = int(datetime.now().timestamp())
             
-            # Envoyer les chunks de mani?re progressive
+            # Envoyer les chunks de manière progressive
             words = response_content.split()
             for i, word in enumerate(words):
                 chunk = ChatCompletionChunk(
@@ -263,7 +263,7 @@ async def chat_completions_stream(request: ChatCompletionRequest):
                     }]
                 )
                 yield f"data: {chunk.model_dump_json()}\n\n"
-                await asyncio.sleep(0.05)  # D?lai pour simuler le streaming
+                await asyncio.sleep(0.05)  # Délai pour simuler le streaming
             
             # Chunk final
             yield "data: [DONE]\n\n"
@@ -289,14 +289,14 @@ async def chat_completions_stream(request: ChatCompletionRequest):
 
 @app.get("/health")
 async def health():
-    """Endpoint de sant?"""
+    """Endpoint de santé"""
     return {"status": "ok", "service": "cursor-agent-proxy"}
 
 
 @app.get("/v1/models")
 async def list_models():
     """
-    Liste les mod?les disponibles (compatible OpenAI)
+    Liste les modèles disponibles (compatible OpenAI)
     """
     return {
         "object": "list",

@@ -1,22 +1,22 @@
 #!/bin/bash
-# Script pour cr?er et configurer le fichier .env
+# Script pour créer et configurer le fichier .env
 
 set -e
 
 ENV_FILE=".env"
 EXAMPLE_FILE=".env.example"
 
-echo "?? Configuration du fichier .env"
+echo "⚙️ Configuration du fichier .env"
 echo "=================================="
 echo ""
 
-# V?rifier si .env existe d?j?
+# Vérifier si .env existe déjà
 if [ -f "$ENV_FILE" ]; then
-    echo "??  Le fichier .env existe d?j?."
+    echo "⚠️  Le fichier .env existe déjà."
     read -p "Voulez-vous le remplacer? (o/N): " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[OoYy]$ ]]; then
-        echo "Annul?."
+        echo "Annulé."
         exit 0
     fi
     echo ""
@@ -25,18 +25,18 @@ fi
 # Copier le fichier d'exemple
 if [ -f "$EXAMPLE_FILE" ]; then
     cp "$EXAMPLE_FILE" "$ENV_FILE"
-    echo "? Fichier .env cr?? ? partir de .env.example"
+    echo "✅ Fichier .env créé à partir de .env.example"
 else
-    echo "? Fichier .env.example non trouv?!"
+    echo "❌ Fichier .env.example non trouvé!"
     exit 1
 fi
 
 echo ""
-echo "?? Configuration interactive (appuyez sur Entr?e pour garder les valeurs par d?faut)"
+echo "⚙️ Configuration interactive (appuyez sur Entrée pour garder les valeurs par défaut)"
 echo ""
 
 # Demander le mode cursor-agent
-read -p "Mode cursor-agent [cli/http/library] (d?faut: cli): " mode
+read -p "Mode cursor-agent [cli/http/library] (défaut: cli): " mode
 if [ ! -z "$mode" ]; then
     if [[ "$OSTYPE" == "darwin"* ]]; then
         # macOS
@@ -49,7 +49,7 @@ fi
 
 # Si mode CLI, demander le chemin
 if [ -z "$mode" ] || [ "$mode" = "cli" ]; then
-    read -p "Chemin vers cursor-agent CLI (d?faut: cursor-agent): " cli_path
+    read -p "Chemin vers cursor-agent CLI (défaut: cursor-agent): " cli_path
     if [ ! -z "$cli_path" ]; then
         if [[ "$OSTYPE" == "darwin"* ]]; then
             sed -i '' "s|CURSOR_AGENT_CLI_PATH=.*|CURSOR_AGENT_CLI_PATH=$cli_path|" "$ENV_FILE"
@@ -75,7 +75,7 @@ fi
 read -p "Activer l'authentification par API key? (o/N): " -n 1 -r
 echo
 if [[ $REPLY =~ ^[OoYy]$ ]]; then
-    # G?n?rer une cl? API
+    # Générer une clé API
     if command -v python3 &> /dev/null; then
         api_key=$(python3 -c "import secrets; print('sk-' + secrets.token_urlsafe(32))")
     elif command -v python &> /dev/null; then
@@ -90,11 +90,11 @@ if [[ $REPLY =~ ^[OoYy]$ ]]; then
     else
         sed -i "s|API_KEY=.*|API_KEY=$api_key|" "$ENV_FILE"
     fi
-    echo "? Cl? API g?n?r?e: $api_key"
+    echo "🔑 Clé API générée: $api_key"
 fi
 
 # Demander le niveau de log
-read -p "Niveau de log [DEBUG/INFO/WARNING/ERROR] (d?faut: INFO): " log_level
+read -p "Niveau de log [DEBUG/INFO/WARNING/ERROR] (défaut: INFO): " log_level
 if [ ! -z "$log_level" ]; then
     if [[ "$OSTYPE" == "darwin"* ]]; then
         sed -i '' "s/LOG_LEVEL=.*/LOG_LEVEL=$log_level/" "$ENV_FILE"
@@ -105,11 +105,11 @@ fi
 
 echo ""
 echo "=================================="
-echo "? Configuration termin?e!"
+echo "✅ Configuration terminée!"
 echo ""
-echo "?? Fichier .env cr?? avec les param?tres suivants:"
+echo "📄 Fichier .env créé avec les paramètres suivants:"
 echo ""
 cat "$ENV_FILE" | grep -v "^#" | grep -v "^$" | sed 's/^/   /'
 echo ""
-echo "?? Vous pouvez ?diter .env manuellement pour ajuster les param?tres."
-echo "?? Voir CONFIGURATION.md pour plus de d?tails."
+echo "✏️ Vous pouvez éditer .env manuellement pour ajuster les paramètres."
+echo "📖 Voir CONFIGURATION.md pour plus de détails."

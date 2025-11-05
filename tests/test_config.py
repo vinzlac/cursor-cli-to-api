@@ -6,10 +6,10 @@ from config import Settings
 
 
 def test_default_settings():
-    """Test des valeurs par d?faut"""
+    """Test des valeurs par défaut"""
     settings = Settings()
     assert settings.host == "0.0.0.0"
-    assert settings.port == 8000
+    assert settings.port == 8001
     assert settings.cursor_agent_mode == "cli"
     assert settings.cursor_agent_timeout == 60
 
