@@ -20,6 +20,61 @@ dev:
     @echo "🔧 Démarrage en mode développement..."
     uv run uvicorn main:app --host 0.0.0.0 --port 8001 --reload
 
+# Démarre le serveur en arrière-plan (daemon)
+start:
+    #!/usr/bin/env bash
+    echo "🚀 Démarrage du serveur en arrière-plan..."
+    if pgrep -f "uvicorn main:app" > /dev/null; then
+        echo "⚠️  Un serveur est déjà en cours d'exécution"
+        echo "   Utilisez 'just stop' pour l'arrêter d'abord"
+        exit 1
+    fi
+    nohup uv run uvicorn main:app --host 0.0.0.0 --port 8001 > server.log 2>&1 &
+    sleep 2
+    if pgrep -f "uvicorn main:app" > /dev/null; then
+        echo "✅ Serveur démarré en arrière-plan"
+        echo "   PID: $(pgrep -f "uvicorn main:app")"
+        echo "   Logs: tail -f server.log"
+        echo "   Status: just status"
+        echo "   Arrêter: just stop"
+    else
+        echo "❌ Échec du démarrage, voir server.log"
+        exit 1
+    fi
+
+# Arrête le serveur en cours d'exécution
+stop:
+    @echo "🛑 Arrêt du serveur..."
+    @pkill -f "uvicorn main:app" 2>/dev/null && echo "✅ Serveur arrêté" || echo "⚠️  Aucun serveur en cours d'exécution"
+
+# Affiche les logs du serveur en temps réel
+logs:
+    @echo "📜 Logs du serveur (Ctrl+C pour quitter):"
+    @if [ -f server.log ]; then tail -f server.log; else echo "❌ Fichier server.log introuvable. Le serveur est-il démarré avec 'just start' ?"; fi
+
+# Vérifie l'état du serveur
+status:
+    #!/usr/bin/env bash
+    echo "📊 État du serveur:"
+    echo ""
+    if pgrep -f "uvicorn main:app" > /dev/null; then
+        echo "  Status: ✅ EN COURS D'EXÉCUTION"
+        echo "  PID: $(pgrep -f "uvicorn main:app" | tr '\n' ' ')"
+        echo "  Port: 8001"
+        echo ""
+        if curl -s http://localhost:8001/health > /dev/null 2>&1; then
+            echo "  Santé: ✅ Le serveur répond correctement"
+            echo "  URL: http://localhost:8001"
+            echo "  Docs: http://localhost:8001/docs"
+        else
+            echo "  Santé: ⚠️  Le processus existe mais ne répond pas"
+        fi
+    else
+        echo "  Status: ❌ ARRÊTÉ"
+        echo ""
+        echo "  Pour démarrer: just dev  ou  just run"
+    fi
+
 # Lance les tests
 test:
     @echo "🧪 Lancement des tests..."
