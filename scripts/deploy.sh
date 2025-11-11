@@ -6,7 +6,7 @@ set -e
 ENV="${1:-production}"
 DOCKER_BUILD="${DOCKER_BUILD:-true}"
 
-echo "🚀 Déploiement de cursor-cli-to-api"
+echo "🚀 Déploiement de cursor-openai-proxy"
 echo "Environnement: $ENV"
 echo ""
 
@@ -19,7 +19,7 @@ fi
 # Build Docker si demandé
 if [ "$DOCKER_BUILD" = "true" ]; then
     echo "🔨 Construction de l'image Docker..."
-    docker build -t cursor-cli-to-api:latest .
+    docker build -t cursor-openai-proxy:latest .
     echo "✅ Image Docker construite"
 fi
 

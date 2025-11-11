@@ -1,4 +1,4 @@
-# Configurations alternatives Docker Compose pour cursor-cli-to-api
+# Configurations alternatives Docker Compose pour cursor-openai-proxy
 #
 # Ce fichier contient différentes configurations Docker selon vos besoins.
 # Copiez la configuration souhaitée dans docker-compose.yml

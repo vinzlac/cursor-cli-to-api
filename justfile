@@ -1,4 +1,4 @@
-# Justfile pour cursor-cli-to-api
+# Justfile pour cursor-openai-proxy
 # Command runner moderne pour gérer les tâches du projet
 
 # Affiche l'aide avec toutes les commandes disponibles
@@ -221,7 +221,7 @@ update-cursor-token:
 # Build l'image Docker
 docker-build:
     @echo "🐳 Construction de l'image Docker..."
-    docker build -t cursor-cli-to-api:latest .
+    docker build -t cursor-openai-proxy:latest .
 
 # Lance avec Docker Compose
 docker-up:

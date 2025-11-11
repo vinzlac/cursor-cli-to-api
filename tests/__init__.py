@@ -1,1 +1,1 @@
-# Tests pour cursor-cli-to-api
+# Tests pour cursor-openai-proxy

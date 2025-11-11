@@ -1,4 +1,4 @@
-# Dockerfile pour cursor-cli-to-api
+# Dockerfile pour cursor-openai-proxy
 FROM python:3.11-slim
 
 # Installer les dépendances système (curl, ca-certificates pour cursor-agent)

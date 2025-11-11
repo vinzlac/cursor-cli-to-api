@@ -1,6 +1,6 @@
 # Guide de sécurité
 
-Ce guide explique les aspects de sécurité de cursor-cli-to-api.
+Ce guide explique les aspects de sécurité de cursor-openai-proxy.
 
 ## 🔐 Authentification de l'API Proxy
 

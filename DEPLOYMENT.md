@@ -1,6 +1,6 @@
 # Guide de déploiement
 
-Ce guide explique comment déployer cursor-cli-to-api en production.
+Ce guide explique comment déployer cursor-openai-proxy en production.
 
 ## 🐳 Déploiement avec Docker
 
@@ -48,7 +48,7 @@ DOCKER_BUILD=false ./scripts/deploy.sh
 2. **Cloner et configurer:**
    ```bash
    git clone <repository>
-   cd cursor-cli-to-api
+   cd cursor-openai-proxy
    cp .env.example .env
    # éditer .env
    ```
@@ -69,9 +69,9 @@ DOCKER_BUILD=false ./scripts/deploy.sh
    [Service]
    Type=simple
    User=www-data
-   WorkingDirectory=/path/to/cursor-cli-to-api
-   Environment="PATH=/path/to/cursor-cli-to-api/.venv/bin"
-   ExecStart=/path/to/cursor-cli-to-api/.venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000
+   WorkingDirectory=/path/to/cursor-openai-proxy
+   Environment="PATH=/path/to/cursor-openai-proxy/.venv/bin"
+   ExecStart=/path/to/cursor-openai-proxy/.venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000
    Restart=always
 
    [Install]

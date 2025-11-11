@@ -52,11 +52,11 @@ jobs:
       uses: docker/setup-buildx-action@v3
     
     - name: Build Docker image
-      run: docker build -t cursor-cli-to-api:test .
+      run: docker build -t cursor-openai-proxy:test .
     
     - name: Test Docker image
       run: |
-        docker run -d -p 8000:8000 --name test-api cursor-cli-to-api:test
+        docker run -d -p 8000:8000 --name test-api cursor-openai-proxy:test
         sleep 5
         curl -f http://localhost:8000/health || exit 1
         docker stop test-api

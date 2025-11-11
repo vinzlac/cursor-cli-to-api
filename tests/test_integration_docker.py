@@ -46,7 +46,7 @@ def is_docker_running() -> bool:
         return False
 
 
-def is_compose_project_running(project_name: str = "cursor-cli-to-api-test") -> bool:
+def is_compose_project_running(project_name: str = "cursor-openai-proxy-test") -> bool:
     """Vérifie si un projet Docker Compose est déjà en cours"""
     try:
         result = subprocess.run(
@@ -91,7 +91,7 @@ def docker_compose():
         pytest.skip(f"Port {DOCKER_PORT} déjà utilisé. Arrêtez le service existant.")
     
     # Vérifier qu'un projet compose n'est pas déjà en cours
-    project_name = "cursor-cli-to-api-test"
+    project_name = "cursor-openai-proxy-test"
     if is_compose_project_running(project_name):
         pytest.skip(f"Projet Docker Compose '{project_name}' déjà en cours. Arrêtez-le avec 'docker-compose -p {project_name} down'")
     
@@ -235,7 +235,7 @@ class TestDockerChatCompletions:
     
     def test_cursor_agent_installed(self, docker_compose):
         """Vérifier que cursor-agent est installé dans le conteneur"""
-        project_name = "cursor-cli-to-api-test"
+        project_name = "cursor-openai-proxy-test"
         result = subprocess.run(
             ["docker-compose", "-f", "docker-compose.test.yml", "-p", project_name, "exec", "-T", "api", "cursor-agent", "--version"],
             capture_output=True,
@@ -249,7 +249,7 @@ class TestDockerChatCompletions:
     
     def test_environment_variables(self, docker_compose):
         """Vérifier que les variables d'environnement sont correctement passées"""
-        project_name = "cursor-cli-to-api-test"
+        project_name = "cursor-openai-proxy-test"
         result = subprocess.run(
             ["docker-compose", "-f", "docker-compose.test.yml", "-p", project_name, "exec", "-T", "api", "env"],
             capture_output=True,

@@ -1,6 +1,6 @@
 # 🐳 Guide d'utilisation Docker
 
-Ce guide explique comment utiliser cursor-cli-to-api avec Docker et Docker Compose.
+Ce guide explique comment utiliser cursor-openai-proxy avec Docker et Docker Compose.
 
 ## 📋 Prérequis
 
@@ -317,7 +317,7 @@ docker-compose --env-file .env.local up
 
 ```bash
 # Voir l'utilisation CPU/RAM
-docker stats cursor-cli-to-api-api-1
+docker stats cursor-openai-proxy-api-1
 
 # Limiter les ressources
 # Dans docker-compose.yml:

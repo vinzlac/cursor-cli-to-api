@@ -1,6 +1,6 @@
 # Guide de démarrage rapide
 
-Ce guide vous permet de démarrer rapidement avec cursor-cli-to-api.
+Ce guide vous permet de démarrer rapidement avec cursor-openai-proxy.
 
 ## 🚀 Démarrage en 5 minutes
 

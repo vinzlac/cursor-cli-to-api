@@ -1,5 +1,5 @@
 [project]
-name = "cursor-cli-to-api"
+name = "cursor-openai-proxy"
 version = "1.0.0"
 description = "Proxy FastAPI pour cursor-agent compatible avec l'API OpenAI/ChatGPT"
 readme = "README.md"
