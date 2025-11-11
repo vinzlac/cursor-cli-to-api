@@ -210,7 +210,15 @@ class TestDockerModels:
         assert len(models.data) > 0
         
         model_ids = [model.id for model in models.data]
-        assert "cursor-agent" in model_ids
+        # Vérifier la présence des modèles natifs cursor-agent
+        assert "auto" in model_ids  # Modèle par défaut
+        assert "gpt-5" in model_ids
+        assert "sonnet-4.5" in model_ids
+        assert "opus-4.1" in model_ids
+        assert "grok" in model_ids
+        # Vérifier la présence d'alias OpenAI/Anthropic
+        assert "gpt-4o" in model_ids
+        assert "claude-3-5-sonnet-20241022" in model_ids
         
         print(f"\n✅ Modèles disponibles: {model_ids}")
 

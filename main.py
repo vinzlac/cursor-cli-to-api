@@ -46,7 +46,7 @@ class Message(BaseModel):
 
 
 class ChatCompletionRequest(BaseModel):
-    model: str = "default"  # Modèle par défaut de cursor-agent
+    model: str = "auto"  # Modèle par défaut de cursor-agent (auto-sélection)
     messages: List[Message]
     temperature: Optional[float] = 0.7
     max_tokens: Optional[int] = None
@@ -86,26 +86,36 @@ class ChatCompletionChunk(BaseModel):
     choices: List[Dict[str, Any]]
 
 
-# Mapping des modèles OpenAI vers les modèles cursor-agent
+# Mapping des modèles OpenAI/Anthropic vers les modèles cursor-agent
+# Modèles réels disponibles: composer-1, auto, sonnet-4.5, sonnet-4.5-thinking,
+# gpt-5, gpt-5-codex, gpt-5-codex-high, opus-4.1, grok
 MODEL_MAPPING = {
-    # Modèles OpenAI
+    # Modèles OpenAI → gpt-5
     "gpt-4o": "gpt-5",
     "gpt-4o-mini": "gpt-5",
     "gpt-4-turbo": "gpt-5",
     "gpt-4": "gpt-5",
     "gpt-3.5-turbo": "gpt-5",
-    "gpt-5": "gpt-5",
     
-    # Modèles Anthropic Claude
-    "claude-3-5-sonnet-20241022": "sonnet-4",
-    "claude-sonnet-4": "sonnet-4",
-    "claude-sonnet-4.0": "sonnet-4",
-    "sonnet-4": "sonnet-4",
-    "sonnet-4-thinking": "sonnet-4-thinking",
+    # Modèles Anthropic Claude Sonnet → sonnet-4.5
+    "claude-3-5-sonnet-20241022": "sonnet-4.5",
+    "claude-3-5-sonnet": "sonnet-4.5",
+    "claude-sonnet-4.5": "sonnet-4.5",
+    "claude-sonnet-4": "sonnet-4.5",
+    "sonnet-4": "sonnet-4.5",  # Ancien nom
+    
+    # Modèles Anthropic Claude Sonnet avec thinking → sonnet-4.5-thinking
+    "claude-3-5-sonnet-thinking": "sonnet-4.5-thinking",
+    "sonnet-4-thinking": "sonnet-4.5-thinking",  # Ancien nom
+    
+    # Modèles Anthropic Opus → opus-4.1
+    "claude-opus-4": "opus-4.1",
+    "claude-4-opus": "opus-4.1",
     
     # Modèles génériques
-    "cursor-agent": "default",
-    "default": "default",
+    "cursor-agent": "auto",
+    "default": "auto",
+    "auto": "auto",
 }
 
 
@@ -126,17 +136,20 @@ def map_model_name(model: str) -> str:
         return mapped
     
     # Si pas de mapping trouvé, vérifier si c'est déjà un modèle cursor-agent valide
-    cursor_models = ["gpt-5", "sonnet-4", "sonnet-4-thinking", "default"]
+    cursor_models = [
+        "composer-1", "auto", "sonnet-4.5", "sonnet-4.5-thinking",
+        "gpt-5", "gpt-5-codex", "gpt-5-codex-high", "opus-4.1", "grok"
+    ]
     if model in cursor_models:
         logger.info(f"Modèle '{model}' utilisé tel quel")
         return model
     
-    # Sinon, utiliser le modèle par défaut
-    logger.warning(f"Modèle '{model}' non reconnu, utilisation de 'default'")
-    return "default"
+    # Sinon, utiliser le modèle par défaut (auto)
+    logger.warning(f"Modèle '{model}' non reconnu, utilisation de 'auto'")
+    return "auto"
 
 
-async def call_cursor_agent(messages: List[Message], model: str = "default") -> str:
+async def call_cursor_agent(messages: List[Message], model: str = "auto") -> str:
     """
     Appelle cursor-agent avec les messages fournis.
     
@@ -396,25 +409,35 @@ async def list_models():
     """
     Liste les modèles disponibles (compatible OpenAI)
     
-    Retourne tous les modèles supportés par cursor-agent, ainsi que leurs alias OpenAI.
+    Retourne tous les modèles supportés par cursor-agent, ainsi que leurs alias OpenAI/Anthropic.
     """
     timestamp = int(datetime.now().timestamp())
     
-    # Modèles natifs cursor-agent
+    # Modèles natifs cursor-agent (basé sur: cursor-agent --help)
     native_models = [
-        {"id": "default", "object": "model", "created": timestamp, "owned_by": "cursor"},
+        {"id": "auto", "object": "model", "created": timestamp, "owned_by": "cursor"},
+        {"id": "composer-1", "object": "model", "created": timestamp, "owned_by": "cursor"},
         {"id": "gpt-5", "object": "model", "created": timestamp, "owned_by": "openai"},
-        {"id": "sonnet-4", "object": "model", "created": timestamp, "owned_by": "anthropic"},
-        {"id": "sonnet-4-thinking", "object": "model", "created": timestamp, "owned_by": "anthropic"},
+        {"id": "gpt-5-codex", "object": "model", "created": timestamp, "owned_by": "openai"},
+        {"id": "gpt-5-codex-high", "object": "model", "created": timestamp, "owned_by": "openai"},
+        {"id": "sonnet-4.5", "object": "model", "created": timestamp, "owned_by": "anthropic"},
+        {"id": "sonnet-4.5-thinking", "object": "model", "created": timestamp, "owned_by": "anthropic"},
+        {"id": "opus-4.1", "object": "model", "created": timestamp, "owned_by": "anthropic"},
+        {"id": "grok", "object": "model", "created": timestamp, "owned_by": "xai"},
     ]
     
-    # Alias OpenAI populaires (pour compatibilité)
+    # Alias populaires (pour compatibilité avec clients OpenAI/Anthropic)
     alias_models = [
+        # Alias OpenAI
         {"id": "gpt-4o", "object": "model", "created": timestamp, "owned_by": "openai"},
         {"id": "gpt-4o-mini", "object": "model", "created": timestamp, "owned_by": "openai"},
         {"id": "gpt-4-turbo", "object": "model", "created": timestamp, "owned_by": "openai"},
         {"id": "gpt-4", "object": "model", "created": timestamp, "owned_by": "openai"},
+        {"id": "gpt-3.5-turbo", "object": "model", "created": timestamp, "owned_by": "openai"},
+        # Alias Anthropic
         {"id": "claude-3-5-sonnet-20241022", "object": "model", "created": timestamp, "owned_by": "anthropic"},
+        {"id": "claude-3-5-sonnet", "object": "model", "created": timestamp, "owned_by": "anthropic"},
+        {"id": "claude-opus-4", "object": "model", "created": timestamp, "owned_by": "anthropic"},
     ]
     
     return {

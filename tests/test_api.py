@@ -31,10 +31,15 @@ def test_list_models():
     
     # Vérifier que les modèles principaux sont présents
     model_ids = [model["id"] for model in data["data"]]
-    assert "default" in model_ids
+    # Modèles natifs cursor-agent
+    assert "auto" in model_ids  # Modèle par défaut
     assert "gpt-5" in model_ids
-    assert "sonnet-4" in model_ids
-    assert "gpt-4o" in model_ids  # Alias OpenAI
+    assert "sonnet-4.5" in model_ids
+    assert "opus-4.1" in model_ids
+    assert "grok" in model_ids
+    # Alias OpenAI/Anthropic
+    assert "gpt-4o" in model_ids
+    assert "claude-3-5-sonnet-20241022" in model_ids
 
 
 def test_chat_completions():
@@ -42,7 +47,7 @@ def test_chat_completions():
     response = client.post(
         "/v1/chat/completions",
         json={
-            "model": "default",
+            "model": "auto",
             "messages": [
                 {"role": "user", "content": "Bonjour"}
             ]
@@ -62,7 +67,7 @@ def test_chat_completions_with_system_message():
     response = client.post(
         "/v1/chat/completions",
         json={
-            "model": "default",
+            "model": "auto",
             "messages": [
                 {"role": "system", "content": "Tu es un assistant utile."},
                 {"role": "user", "content": "Dis bonjour"}
@@ -79,7 +84,7 @@ def test_chat_completions_stream():
     response = client.post(
         "/v1/chat/completions-stream",
         json={
-            "model": "default",
+            "model": "auto",
             "messages": [
                 {"role": "user", "content": "Test"}
             ]
@@ -94,7 +99,7 @@ def test_chat_completions_empty_messages():
     response = client.post(
         "/v1/chat/completions",
         json={
-            "model": "default",
+            "model": "auto",
             "messages": []
         }
     )

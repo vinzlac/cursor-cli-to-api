@@ -35,7 +35,7 @@ def example_basic_chat():
     print("=== Exemple 1: Chat basique ===\n")
     
     response = client.chat.completions.create(
-        model="cursor-agent",
+        model="gpt-4o",  # Utilise GPT-4o (mappé vers gpt-5 en interne)
         messages=[
             {"role": "system", "content": "Tu es un assistant Python expert."},
             {"role": "user", "content": "Explique-moi ce qu'est FastAPI en 2 phrases."}
@@ -53,7 +53,7 @@ def example_streaming():
     print("=== Exemple 2: Chat avec streaming ===\n")
     
     stream = client.chat.completions.create(
-        model="cursor-agent",
+        model="claude-3-5-sonnet-20241022",  # Utilise Claude Sonnet 4 (mappé vers sonnet-4)
         messages=[
             {"role": "user", "content": "Raconte-moi une courte histoire sur Python."}
         ],
@@ -78,7 +78,7 @@ def example_multiple_turns():
     
     # Premier tour
     response1 = client.chat.completions.create(
-        model="cursor-agent",
+        model="default",  # Utilise le modèle par défaut de cursor-agent
         messages=messages
     )
     print(f"User: {messages[-1]['content']}")
@@ -93,7 +93,7 @@ def example_multiple_turns():
     # Deuxième tour
     messages.append({"role": "user", "content": "Peux-tu donner un exemple?"})
     response2 = client.chat.completions.create(
-        model="cursor-agent",
+        model="default",  # Utilise le modèle par défaut de cursor-agent
         messages=messages
     )
     print(f"User: {messages[-1]['content']}")

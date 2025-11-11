@@ -151,6 +151,93 @@ Ou utilisez:
 just docs  # Ouvre automatiquement la documentation dans le navigateur
 ```
 
+## 🤖 Modèles supportés
+
+Le proxy supporte tous les modèles disponibles dans cursor-agent et mappe automatiquement les noms de modèles OpenAI/Anthropic populaires.
+
+### Modèles natifs cursor-agent
+
+| Modèle | Description |
+|--------|-------------|
+| `default` | Modèle par défaut de cursor-agent (recommandé) |
+| `gpt-5` | GPT-5 d'OpenAI |
+| `sonnet-4` | Claude Sonnet 4 d'Anthropic |
+| `sonnet-4-thinking` | Claude Sonnet 4 avec mode thinking |
+
+### Alias OpenAI (mappés automatiquement)
+
+Les noms de modèles OpenAI populaires sont automatiquement mappés vers `gpt-5` :
+
+| Alias OpenAI | Mappé vers |
+|--------------|------------|
+| `gpt-4o` | `gpt-5` |
+| `gpt-4o-mini` | `gpt-5` |
+| `gpt-4-turbo` | `gpt-5` |
+| `gpt-4` | `gpt-5` |
+| `gpt-3.5-turbo` | `gpt-5` |
+
+### Alias Anthropic (mappés automatiquement)
+
+| Alias Anthropic | Mappé vers |
+|-----------------|------------|
+| `claude-3-5-sonnet-20241022` | `sonnet-4` |
+| `claude-sonnet-4` | `sonnet-4` |
+| `claude-sonnet-4.0` | `sonnet-4` |
+
+### Exemples d'utilisation
+
+```python
+from openai import OpenAI
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+client = OpenAI(
+    base_url="http://localhost:8001/v1",
+    api_key=os.getenv("API_KEY")
+)
+
+# Utiliser GPT-5 avec un nom OpenAI (mappé automatiquement)
+response = client.chat.completions.create(
+    model="gpt-4o",  # Sera mappé vers gpt-5
+    messages=[{"role": "user", "content": "Hello"}]
+)
+
+# Utiliser Claude Sonnet 4 avec un nom Anthropic
+response = client.chat.completions.create(
+    model="claude-3-5-sonnet-20241022",  # Sera mappé vers sonnet-4
+    messages=[{"role": "user", "content": "Hello"}]
+)
+
+# Utiliser directement un nom cursor-agent
+response = client.chat.completions.create(
+    model="gpt-5",  # Nom natif cursor-agent
+    messages=[{"role": "user", "content": "Hello"}]
+)
+
+# Utiliser le modèle par défaut
+response = client.chat.completions.create(
+    model="default",  # Laisse cursor-agent choisir
+    messages=[{"role": "user", "content": "Hello"}]
+)
+```
+
+### Liste des modèles disponibles
+
+Pour obtenir la liste complète des modèles supportés :
+
+```bash
+curl http://localhost:8001/v1/models
+```
+
+Ou en Python :
+
+```python
+models = client.models.list()
+for model in models.data:
+    print(f"- {model.id} (owned by {model.owned_by})")
+```
+
 ## 📡 API Endpoints
 
 ### POST `/v1/chat/completions`
@@ -160,7 +247,7 @@ Endpoint principal compatible avec l'API OpenAI.
 **Requête:**
 ```json
 {
-  "model": "cursor-agent",
+  "model": "gpt-4o",
   "messages": [
     {"role": "system", "content": "Tu es un assistant utile."},
     {"role": "user", "content": "Bonjour, comment ça va?"}
@@ -176,7 +263,7 @@ Endpoint principal compatible avec l'API OpenAI.
   "id": "chatcmpl-abc123",
   "object": "chat.completion",
   "created": 1234567890,
-  "model": "cursor-agent",
+  "model": "gpt-4o",
   "choices": [
     {
       "index": 0,

@@ -71,9 +71,12 @@ class TestModels:
         assert hasattr(models, 'data')
         assert len(models.data) > 0
         
-        # Vérifier qu'au moins cursor-agent est présent
+        # Vérifier que les modèles principaux sont présents
         model_ids = [model.id for model in models.data]
-        assert "cursor-agent" in model_ids
+        assert "auto" in model_ids  # Modèle par défaut
+        assert "gpt-5" in model_ids
+        assert "sonnet-4.5" in model_ids
+        assert "gpt-4o" in model_ids  # Alias OpenAI
         
         # Vérifier les attributs de chaque modèle
         for model in models.data:
