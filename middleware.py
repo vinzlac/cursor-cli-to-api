@@ -4,7 +4,7 @@ Middleware pour l'API FastAPI
 from fastapi import Request, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import Response
+from starlette.responses import Response, JSONResponse
 import time
 import logging
 from typing import Callable
@@ -70,23 +70,23 @@ class AuthMiddleware(BaseHTTPMiddleware):
         # Vérifier l'API key
         auth_header = request.headers.get("Authorization")
         if not auth_header:
-            raise HTTPException(
+            return JSONResponse(
                 status_code=401,
-                detail="Authorization header manquant"
+                content={"detail": "Authorization header manquant"}
             )
         
         if not auth_header.startswith("Bearer "):
-            raise HTTPException(
+            return JSONResponse(
                 status_code=401,
-                detail="Format d'autorisation invalide. Utilisez: Bearer <token>"
+                content={"detail": "Format d'autorisation invalide. Utilisez: Bearer <token>"}
             )
         
         token = auth_header.replace("Bearer ", "")
         if token != settings.api_key:
             logger.warning(f"Tentative d'accès avec un token invalide depuis {request.client.host}")
-            raise HTTPException(
+            return JSONResponse(
                 status_code=403,
-                detail="Token d'autorisation invalide"
+                content={"detail": "Token d'autorisation invalide"}
             )
         
         return await call_next(request)

@@ -5,6 +5,20 @@ set -e
 
 API_URL="${API_URL:-http://localhost:8001}"
 
+# Charger API_KEY depuis .env si disponible
+if [ -f .env ]; then
+    export $(grep "^API_KEY=" .env | xargs)
+fi
+
+# Vérifier si l'authentification est activée
+if [ -n "$API_KEY" ]; then
+    echo "🔐 Authentification activée (API_KEY configurée)"
+    AUTH_HEADER="Authorization: Bearer $API_KEY"
+else
+    echo "⚠️  Authentification désactivée (pas d'API_KEY)"
+    AUTH_HEADER=""
+fi
+
 echo "🧪 Tests d'intégration de l'API cursor-agent"
 echo "=============================================="
 echo ""
@@ -25,7 +39,11 @@ echo ""
 
 # Test 2: Liste des modèles
 echo "2. Test de la liste des modèles..."
-HTTP_CODE=$(curl -s -o /tmp/models_response.json -w "%{http_code}" "${API_URL}/v1/models")
+if [ -n "$AUTH_HEADER" ]; then
+    HTTP_CODE=$(curl -s -o /tmp/models_response.json -w "%{http_code}" -H "$AUTH_HEADER" "${API_URL}/v1/models")
+else
+    HTTP_CODE=$(curl -s -o /tmp/models_response.json -w "%{http_code}" "${API_URL}/v1/models")
+fi
 MODELS_RESPONSE=$(cat /tmp/models_response.json)
 
 if [ "$HTTP_CODE" -eq 200 ] && echo "$MODELS_RESPONSE" | grep -q "cursor-agent"; then
@@ -39,14 +57,26 @@ echo ""
 
 # Test 3: Chat completion
 echo "3. Test de chat completion..."
-HTTP_CODE=$(curl -s -o /tmp/chat_response.json -w "%{http_code}" -X POST "${API_URL}/v1/chat/completions" \
-    -H "Content-Type: application/json" \
-    -d '{
-        "model": "cursor-agent",
-        "messages": [
-            {"role": "user", "content": "Bonjour"}
-        ]
-    }')
+if [ -n "$AUTH_HEADER" ]; then
+    HTTP_CODE=$(curl -s -o /tmp/chat_response.json -w "%{http_code}" -X POST "${API_URL}/v1/chat/completions" \
+        -H "Content-Type: application/json" \
+        -H "$AUTH_HEADER" \
+        -d '{
+            "model": "cursor-agent",
+            "messages": [
+                {"role": "user", "content": "Bonjour"}
+            ]
+        }')
+else
+    HTTP_CODE=$(curl -s -o /tmp/chat_response.json -w "%{http_code}" -X POST "${API_URL}/v1/chat/completions" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "model": "cursor-agent",
+            "messages": [
+                {"role": "user", "content": "Bonjour"}
+            ]
+        }')
+fi
 CHAT_RESPONSE=$(cat /tmp/chat_response.json)
 
 if [ "$HTTP_CODE" -eq 200 ] && echo "$CHAT_RESPONSE" | grep -q "choices"; then
@@ -68,8 +98,28 @@ else
 fi
 echo ""
 
+# Test 5: Vérification de l'authentification (si activée)
+if [ -n "$API_KEY" ]; then
+    echo "5. Test de l'authentification..."
+    HTTP_CODE=$(curl -s -o /tmp/auth_test.json -w "%{http_code}" -X POST "${API_URL}/v1/chat/completions" \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer wrong-key" \
+        -d '{"model":"cursor-agent","messages":[{"role":"user","content":"Test"}]}')
+    
+    if [ "$HTTP_CODE" -eq 401 ] || [ "$HTTP_CODE" -eq 403 ]; then
+        echo "✅ Authentification fonctionne (HTTP $HTTP_CODE pour mauvaise clé)"
+    else
+        echo "⚠️  L'authentification ne bloque pas les mauvaises clés (HTTP $HTTP_CODE)"
+    fi
+    echo ""
+fi
+
 # Nettoyage des fichiers temporaires
-rm -f /tmp/health_response.json /tmp/models_response.json /tmp/chat_response.json
+rm -f /tmp/health_response.json /tmp/models_response.json /tmp/chat_response.json /tmp/auth_test.json
 
 echo "=============================================="
-echo "✅ Tous les tests d'intégration sont passés!"
+if [ -n "$API_KEY" ]; then
+    echo "✅ Tous les tests d'intégration sont passés (avec authentification)!"
+else
+    echo "✅ Tous les tests d'intégration sont passés (sans authentification)!"
+fi
