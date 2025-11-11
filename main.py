@@ -46,7 +46,7 @@ class Message(BaseModel):
 
 
 class ChatCompletionRequest(BaseModel):
-    model: str = "cursor-agent"
+    model: str = "default"  # Modèle par défaut de cursor-agent
     messages: List[Message]
     temperature: Optional[float] = 0.7
     max_tokens: Optional[int] = None
@@ -86,7 +86,57 @@ class ChatCompletionChunk(BaseModel):
     choices: List[Dict[str, Any]]
 
 
-async def call_cursor_agent(messages: List[Message]) -> str:
+# Mapping des modèles OpenAI vers les modèles cursor-agent
+MODEL_MAPPING = {
+    # Modèles OpenAI
+    "gpt-4o": "gpt-5",
+    "gpt-4o-mini": "gpt-5",
+    "gpt-4-turbo": "gpt-5",
+    "gpt-4": "gpt-5",
+    "gpt-3.5-turbo": "gpt-5",
+    "gpt-5": "gpt-5",
+    
+    # Modèles Anthropic Claude
+    "claude-3-5-sonnet-20241022": "sonnet-4",
+    "claude-sonnet-4": "sonnet-4",
+    "claude-sonnet-4.0": "sonnet-4",
+    "sonnet-4": "sonnet-4",
+    "sonnet-4-thinking": "sonnet-4-thinking",
+    
+    # Modèles génériques
+    "cursor-agent": "default",
+    "default": "default",
+}
+
+
+def map_model_name(model: str) -> str:
+    """
+    Mappe un nom de modèle OpenAI vers un nom de modèle cursor-agent.
+    Si le modèle n'est pas trouvé dans le mapping, retourne "default".
+    
+    Args:
+        model: Nom du modèle (format OpenAI ou cursor-agent)
+    
+    Returns:
+        Nom du modèle au format cursor-agent
+    """
+    mapped = MODEL_MAPPING.get(model.lower())
+    if mapped:
+        logger.info(f"Modèle '{model}' mappé vers '{mapped}'")
+        return mapped
+    
+    # Si pas de mapping trouvé, vérifier si c'est déjà un modèle cursor-agent valide
+    cursor_models = ["gpt-5", "sonnet-4", "sonnet-4-thinking", "default"]
+    if model in cursor_models:
+        logger.info(f"Modèle '{model}' utilisé tel quel")
+        return model
+    
+    # Sinon, utiliser le modèle par défaut
+    logger.warning(f"Modèle '{model}' non reconnu, utilisation de 'default'")
+    return "default"
+
+
+async def call_cursor_agent(messages: List[Message], model: str = "default") -> str:
     """
     Appelle cursor-agent avec les messages fournis.
     
@@ -94,25 +144,29 @@ async def call_cursor_agent(messages: List[Message]) -> str:
     - cli: Appel via ligne de commande
     - http: Appel via API HTTP
     - library: Appel via bibliothèque Python (à implémenter)
+    
+    Args:
+        messages: Liste des messages de la conversation
+        model: Nom du modèle cursor-agent à utiliser (déjà mappé)
     """
     mode = settings.cursor_agent_mode.lower()
-    logger.info(f"Appel à cursor-agent en mode: {mode}")
+    logger.info(f"Appel à cursor-agent en mode: {mode}, modèle: {model}")
     
     # Convertir les messages en format attendu
     prompt = "\n".join([f"{msg.role}: {msg.content}" for msg in messages])
     
     try:
         if mode == "cli":
-            return await _call_cursor_agent_cli(prompt)
+            return await _call_cursor_agent_cli(prompt, model)
         elif mode == "http":
-            return await _call_cursor_agent_http(messages)
+            return await _call_cursor_agent_http(messages, model)
         elif mode == "library":
-            return await _call_cursor_agent_library(messages)
+            return await _call_cursor_agent_library(messages, model)
         else:
             # Mode simulation par défaut pour les tests
             logger.warning(f"Mode '{mode}' non reconnu, utilisation du mode simulation")
             await asyncio.sleep(0.1)
-            return f"Réponse simulée de cursor-agent pour: {prompt[:50]}..."
+            return f"Réponse simulée de cursor-agent (modèle: {model}) pour: {prompt[:50]}..."
             
     except subprocess.TimeoutExpired:
         logger.error("Timeout lors de l'appel à cursor-agent")
@@ -128,8 +182,14 @@ async def call_cursor_agent(messages: List[Message]) -> str:
         )
 
 
-async def _call_cursor_agent_cli(prompt: str) -> str:
-    """Appel via CLI"""
+async def _call_cursor_agent_cli(prompt: str, model: str) -> str:
+    """
+    Appel via CLI
+    
+    Args:
+        prompt: Le prompt à envoyer à cursor-agent
+        model: Le modèle à utiliser (déjà mappé au format cursor-agent)
+    """
     cli_path = settings.cursor_agent_cli_path or "cursor-agent"
     
     # Préparer l'environnement avec le token si disponible
@@ -138,12 +198,16 @@ async def _call_cursor_agent_cli(prompt: str) -> str:
         # cursor-agent attend CURSOR_API_KEY
         env["CURSOR_API_KEY"] = settings.cursor_api_key
     
+    # Construire la commande avec le modèle
+    cmd = [cli_path, "--model", model, prompt]
+    logger.info(f"Commande cursor-agent: {' '.join(cmd[:3])}... (prompt tronqué)")
+    
     # Exécuter dans un thread pour ne pas bloquer l'event loop
     loop = asyncio.get_event_loop()
     result = await loop.run_in_executor(
         None,
         lambda: subprocess.run(
-            [cli_path, prompt],
+            cmd,
             capture_output=True,
             text=True,
             timeout=settings.cursor_agent_timeout,
@@ -157,13 +221,20 @@ async def _call_cursor_agent_cli(prompt: str) -> str:
     return result.stdout.strip()
 
 
-async def _call_cursor_agent_http(messages: List[Message]) -> str:
-    """Appel via API HTTP"""
+async def _call_cursor_agent_http(messages: List[Message], model: str) -> str:
+    """
+    Appel via API HTTP
+    
+    Args:
+        messages: Liste des messages
+        model: Le modèle à utiliser (déjà mappé au format cursor-agent)
+    """
     if not settings.cursor_agent_http_url:
         raise ValueError("CURSOR_AGENT_HTTP_URL doit être défini pour le mode HTTP")
     
     url = settings.cursor_agent_http_url
     payload = {
+        "model": model,
         "messages": [{"role": msg.role, "content": msg.content} for msg in messages]
     }
     
@@ -171,6 +242,8 @@ async def _call_cursor_agent_http(messages: List[Message]) -> str:
     headers = {}
     if settings.cursor_api_key:
         headers["Authorization"] = f"Bearer {settings.cursor_api_key}"
+    
+    logger.info(f"Requête HTTP à cursor-agent: {url} avec modèle {model}")
     
     async with httpx.AsyncClient(timeout=settings.cursor_agent_timeout) as client:
         response = await client.post(url, json=payload, headers=headers)
@@ -181,11 +254,17 @@ async def _call_cursor_agent_http(messages: List[Message]) -> str:
         return data.get("response") or data.get("content") or str(data)
 
 
-async def _call_cursor_agent_library(messages: List[Message]) -> str:
-    """Appel via bibliothèque Python (à implémenter selon votre bibliothèque)"""
+async def _call_cursor_agent_library(messages: List[Message], model: str) -> str:
+    """
+    Appel via bibliothèque Python (à implémenter selon votre bibliothèque)
+    
+    Args:
+        messages: Liste des messages
+        model: Le modèle à utiliser (déjà mappé au format cursor-agent)
+    """
     # Exemple d'implémentation:
     # from cursor_agent import CursorAgent
-    # agent = CursorAgent()
+    # agent = CursorAgent(model=model)
     # return await agent.chat(messages)
     
     raise NotImplementedError(
@@ -215,8 +294,11 @@ async def chat_completions(request: ChatCompletionRequest):
         )
     
     try:
-        # Appeler cursor-agent
-        response_content = await call_cursor_agent(request.messages)
+        # Mapper le modèle au format cursor-agent
+        cursor_model = map_model_name(request.model)
+        
+        # Appeler cursor-agent avec le modèle mappé
+        response_content = await call_cursor_agent(request.messages, cursor_model)
         
         # Construire la réponse au format OpenAI
         response_message = Message(role="assistant", content=response_content)
@@ -255,8 +337,11 @@ async def chat_completions_stream(request: ChatCompletionRequest):
     """
     async def generate():
         try:
-            # Appeler cursor-agent
-            response_content = await call_cursor_agent(request.messages)
+            # Mapper le modèle au format cursor-agent
+            cursor_model = map_model_name(request.model)
+            
+            # Appeler cursor-agent avec le modèle mappé
+            response_content = await call_cursor_agent(request.messages, cursor_model)
             
             # Simuler le streaming en envoyant des chunks
             chunk_id = f"chatcmpl-{uuid.uuid4().hex[:12]}"
@@ -310,17 +395,31 @@ async def health():
 async def list_models():
     """
     Liste les modèles disponibles (compatible OpenAI)
+    
+    Retourne tous les modèles supportés par cursor-agent, ainsi que leurs alias OpenAI.
     """
+    timestamp = int(datetime.now().timestamp())
+    
+    # Modèles natifs cursor-agent
+    native_models = [
+        {"id": "default", "object": "model", "created": timestamp, "owned_by": "cursor"},
+        {"id": "gpt-5", "object": "model", "created": timestamp, "owned_by": "openai"},
+        {"id": "sonnet-4", "object": "model", "created": timestamp, "owned_by": "anthropic"},
+        {"id": "sonnet-4-thinking", "object": "model", "created": timestamp, "owned_by": "anthropic"},
+    ]
+    
+    # Alias OpenAI populaires (pour compatibilité)
+    alias_models = [
+        {"id": "gpt-4o", "object": "model", "created": timestamp, "owned_by": "openai"},
+        {"id": "gpt-4o-mini", "object": "model", "created": timestamp, "owned_by": "openai"},
+        {"id": "gpt-4-turbo", "object": "model", "created": timestamp, "owned_by": "openai"},
+        {"id": "gpt-4", "object": "model", "created": timestamp, "owned_by": "openai"},
+        {"id": "claude-3-5-sonnet-20241022", "object": "model", "created": timestamp, "owned_by": "anthropic"},
+    ]
+    
     return {
         "object": "list",
-        "data": [
-            {
-                "id": "cursor-agent",
-                "object": "model",
-                "created": int(datetime.now().timestamp()),
-                "owned_by": "cursor"
-            }
-        ]
+        "data": native_models + alias_models
     }
 
 

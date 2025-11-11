@@ -1,9 +1,13 @@
 """
-Tests pour l'API du proxy cursor-agent
+Tests pour l'API du proxy default
 """
 import pytest
 from fastapi.testclient import TestClient
 from main import app
+from config import settings
+
+# Désactiver l'authentification pour les tests unitaires
+settings.api_key = None
 
 client = TestClient(app)
 
@@ -24,7 +28,13 @@ def test_list_models():
     data = response.json()
     assert data["object"] == "list"
     assert len(data["data"]) > 0
-    assert data["data"][0]["id"] == "cursor-agent"
+    
+    # Vérifier que les modèles principaux sont présents
+    model_ids = [model["id"] for model in data["data"]]
+    assert "default" in model_ids
+    assert "gpt-5" in model_ids
+    assert "sonnet-4" in model_ids
+    assert "gpt-4o" in model_ids  # Alias OpenAI
 
 
 def test_chat_completions():
@@ -32,7 +42,7 @@ def test_chat_completions():
     response = client.post(
         "/v1/chat/completions",
         json={
-            "model": "cursor-agent",
+            "model": "default",
             "messages": [
                 {"role": "user", "content": "Bonjour"}
             ]
@@ -52,7 +62,7 @@ def test_chat_completions_with_system_message():
     response = client.post(
         "/v1/chat/completions",
         json={
-            "model": "cursor-agent",
+            "model": "default",
             "messages": [
                 {"role": "system", "content": "Tu es un assistant utile."},
                 {"role": "user", "content": "Dis bonjour"}
@@ -69,7 +79,7 @@ def test_chat_completions_stream():
     response = client.post(
         "/v1/chat/completions-stream",
         json={
-            "model": "cursor-agent",
+            "model": "default",
             "messages": [
                 {"role": "user", "content": "Test"}
             ]
@@ -84,7 +94,7 @@ def test_chat_completions_empty_messages():
     response = client.post(
         "/v1/chat/completions",
         json={
-            "model": "cursor-agent",
+            "model": "default",
             "messages": []
         }
     )
