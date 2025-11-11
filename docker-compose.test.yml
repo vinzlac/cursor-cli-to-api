@@ -1,0 +1,25 @@
+# Docker Compose pour les tests d'intégration
+# Port 8002 pour ne pas conflit avec le dev local (port 8001)
+
+services:
+  api:
+    build: .
+    ports:
+      - "8002:8001"  # Exposer sur 8002 en externe, mais 8001 en interne
+    environment:
+      - PORT=8001
+      - HOST=0.0.0.0
+      - RELOAD=false
+      - LOG_LEVEL=info
+      - CURSOR_API_KEY=${CURSOR_API_KEY}
+      - API_KEY=${API_KEY}
+    env_file:
+      - .env
+    restart: "no"  # Ne pas redémarrer automatiquement pendant les tests
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+

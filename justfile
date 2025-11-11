@@ -90,28 +90,64 @@ test-watch:
     @echo "👀 Lancement des tests en mode watch..."
     uv run ptw tests || echo "⚠️  pytest-watch non disponible: uv pip install pytest-watch"
 
-# Lance les tests d'intégration bash (curl)
-test-integration:
+# Lance les tests d'intégration bash/curl (nécessite un serveur déjà lancé)
+test-integration-curl:
     @echo "🧪 Lancement des tests d'intégration (bash/curl)..."
     @./scripts/test_integration.sh
 
-# Lance les tests d'intégration Python (client OpenAI)
-test-integration-python:
+# Lance les tests d'intégration LOCAUX (Python uniquement, port 8001)
+test-integration-local:
     #!/usr/bin/env bash
-    echo "🧪 Lancement des tests d'intégration (Python/OpenAI client)..."
+    echo "🧪 Tests d'intégration LOCAUX (Python, port 8001)"
+    echo "   Le serveur sera lancé automatiquement"
+    echo ""
     if [ -f .env ]; then
-        echo "⚙️  Chargement de l'API_KEY depuis .env..."
         export $(grep "^API_KEY=" .env | xargs)
+        export $(grep "^CURSOR_API_KEY=" .env | xargs)
     fi
     if [ -z "$API_KEY" ]; then
-        echo "⚠️  API_KEY non trouvée. Les tests vont être ignorés."
-        echo "   Définissez API_KEY dans .env ou en variable d'environnement."
+        echo "⚠️  API_KEY non trouvée dans .env"
+        echo "   Les tests d'authentification seront ignorés."
     fi
-    uv run pytest tests/test_integration_openai.py -v
+    if [ -z "$CURSOR_API_KEY" ]; then
+        echo "⚠️  CURSOR_API_KEY non trouvée dans .env"
+        echo "   Les tests seront ignorés."
+    fi
+    echo ""
+    uv run pytest tests/test_integration_local.py -v -s
 
-# Lance tous les tests (unitaires + intégration bash + intégration Python)
-test-all: test test-integration test-integration-python
-    @echo "✅ Tous les tests terminés!"
+# Lance les tests d'intégration DOCKER (avec Docker Compose, port 8002)
+test-integration-docker:
+    #!/usr/bin/env bash
+    echo "🧪 Tests d'intégration DOCKER (port 8002)"
+    echo "   Docker Compose sera lancé automatiquement"
+    echo ""
+    if [ -f .env ]; then
+        export $(grep "^API_KEY=" .env | xargs)
+        export $(grep "^CURSOR_API_KEY=" .env | xargs)
+    fi
+    if [ -z "$API_KEY" ]; then
+        echo "⚠️  API_KEY non trouvée dans .env"
+    fi
+    if [ -z "$CURSOR_API_KEY" ]; then
+        echo "⚠️  CURSOR_API_KEY non trouvée dans .env"
+    fi
+    echo ""
+    uv run pytest tests/test_integration_docker.py -v -s
+
+# Lance tous les tests d'intégration (local + docker)
+test-integration-all: test-integration-local test-integration-docker
+    @echo ""
+    @echo "✅ Tous les tests d'intégration terminés!"
+
+# Lance TOUS les tests (unitaires + intégration local + intégration docker)
+test-all: test test-integration-local test-integration-docker
+    @echo ""
+    @echo "╔════════════════════════════════════════════════════════════════╗"
+    @echo "║                                                                ║"
+    @echo "║            ✅ TOUS LES TESTS TERMINÉS AVEC SUCCÈS ! 🎉        ║"
+    @echo "║                                                                ║"
+    @echo "╔════════════════════════════════════════════════════════════════╝"
 
 # Nettoie les fichiers générés (cache, venv, etc.)
 clean:

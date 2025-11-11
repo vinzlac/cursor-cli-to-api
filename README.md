@@ -95,9 +95,13 @@ uv pip install -e .
 **Avec just (recommandé pour les commandes):**
 
 ```bash
-just dev   # Mode développement avec reload
-just run    # Mode production
-just        # Voir toutes les commandes disponibles
+just dev     # Mode développement avec reload (port 8001)
+just run     # Mode production (port 8001)
+just start   # Démarrer en arrière-plan (daemon)
+just stop    # Arrêter le serveur
+just status  # Vérifier l'état du serveur
+just logs    # Voir les logs en temps réel
+just         # Voir toutes les commandes disponibles
 ```
 
 **Avec uv (recommandé - pas besoin d'activer le venv):**
@@ -131,16 +135,16 @@ python main.py
 **Ou avec uvicorn directement:**
 
 ```bash
-uv run uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+uv run uvicorn main:app --host 0.0.0.0 --port 8001 --reload
 ```
 
-Le serveur sera accessible sur `http://localhost:8000`
+Le serveur sera accessible sur `http://localhost:8001` (local) ou `http://localhost:8002` (Docker tests)
 
 ### Documentation API
 
 Une fois le serveur démarré, accédez à:
-- Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
+- Swagger UI: `http://localhost:8001/docs`
+- ReDoc: `http://localhost:8001/redoc`
 
 Ou utilisez:
 ```bash
@@ -268,11 +272,16 @@ Puis utiliser:
 
 ```python
 from openai import OpenAI
+import os
+from dotenv import load_dotenv
+
+# Charger les variables d'environnement depuis .env
+load_dotenv()
 
 # Configurer le client pour pointer vers votre proxy
 client = OpenAI(
-    base_url="http://localhost:8000/v1",
-    api_key="not-needed"  # Non utilisé mais requis par la lib
+    base_url="http://localhost:8001/v1",  # Port 8001 pour le développement local
+    api_key=os.getenv("API_KEY")  # API key pour l'authentification
 )
 
 # Utiliser comme avec OpenAI
@@ -305,6 +314,124 @@ Pour la production, ajoutez:
 
 Voir `DEPLOYMENT.md` pour les détails sur le déploiement sécurisé.
 
+## 🧪 Tests
+
+Ce projet dispose d'une architecture de tests complète à plusieurs niveaux :
+
+### Tests unitaires
+
+Tests rapides des composants individuels (config, endpoints, middlewares) :
+
+```bash
+just test              # Exécuter tous les tests unitaires
+just test-cov          # Avec rapport de couverture
+just test-watch        # Mode watch (redémarre automatiquement)
+```
+
+Fichiers : `tests/test_api.py`, `tests/test_config.py`
+
+### Tests d'intégration - Niveau 1 : Python local (port 8001)
+
+Tests rapides qui lancent automatiquement le serveur FastAPI en Python :
+
+```bash
+just test-integration-local
+```
+
+**Caractéristiques :**
+- ✅ Lance/arrête automatiquement le serveur FastAPI
+- ✅ Vérifie qu'aucun serveur n'est déjà sur le port 8001
+- ✅ Utilise le client OpenAI Python officiel
+- ✅ Tests d'authentification, modèles, chat, conversations
+- ⚡ **Rapide** : ~21 secondes
+- 🎯 **Usage** : Développement quotidien, CI/CD rapide
+
+Fichier : `tests/test_integration_local.py`
+
+### Tests d'intégration - Niveau 2 : Docker (port 8002)
+
+Tests complets qui lancent automatiquement Docker Compose :
+
+```bash
+just test-integration-docker
+```
+
+**Caractéristiques :**
+- ✅ Lance/arrête automatiquement Docker Compose
+- ✅ Vérifie qu'aucun conteneur n'est déjà sur le port 8002
+- ✅ Tests spécifiques Docker : cursor-agent installé, env vars, stabilité
+- ✅ Valide l'environnement de production complet
+- 🐳 **Complet** : ~39 secondes
+- 🎯 **Usage** : Validation avant release, CI/CD production
+
+Fichier : `tests/test_integration_docker.py`
+
+Configuration Docker de test : `docker-compose.test.yml`
+
+### Tests d'intégration - Bash/curl
+
+Tests manuels avec curl (nécessite un serveur déjà lancé) :
+
+```bash
+just test-integration-curl
+```
+
+Fichier : `scripts/test_integration.sh`
+
+### Lancer tous les tests
+
+```bash
+# Tous les tests d'intégration (local + docker)
+just test-integration-all
+
+# TOUS les tests (unitaires + intégration complète)
+just test-all
+```
+
+### Séparation des ports
+
+Pour éviter les conflits et clarifier ce qui est testé :
+
+- **Port 8001** : Python local (dev + tests locaux)
+- **Port 8002** : Docker (tests uniquement)
+
+### Architecture des tests
+
+```
+tests/
+├── test_api.py                    # Tests unitaires des endpoints
+├── test_config.py                 # Tests unitaires de la configuration
+├── test_integration_local.py      # Tests d'intégration Python (8001)
+├── test_integration_docker.py     # Tests d'intégration Docker (8002)
+└── test_integration_openai.py     # Tests génériques OpenAI (ancien)
+
+scripts/
+└── test_integration.sh            # Tests bash/curl
+
+docker-compose.test.yml            # Configuration Docker pour les tests
+```
+
+### Workflow recommandé
+
+**Pendant le développement :**
+```bash
+just test-integration-local  # Rapide, teste le code Python
+```
+
+**Avant un commit/push :**
+```bash
+just test-all  # Tout : unitaires + local + docker
+```
+
+**En CI/CD :**
+```bash
+# Tests rapides pour chaque commit
+just test-integration-local
+
+# Tests complets pour main/release
+just test-integration-docker
+```
+
 ## 📝 Notes
 
 - Le comptage de tokens est approximatif (1 token ≈ 4 caractères)
@@ -323,9 +450,12 @@ just dev              # Mode développement avec reload
 just run              # Mode production
 
 # Tests
-just test             # Lancer les tests
-just test-cov         # Tests avec couverture
-just test-integration # Tests d'intégration complets
+just test                      # Tests unitaires uniquement
+just test-cov                  # Tests unitaires avec couverture
+just test-integration-local    # Tests d'intégration Python (port 8001, rapide)
+just test-integration-docker   # Tests d'intégration Docker (port 8002, complet)
+just test-integration-all      # Tous les tests d'intégration
+just test-all                  # TOUS les tests (unitaires + intégration)
 
 # Qualité de code
 just format           # Formater le code
