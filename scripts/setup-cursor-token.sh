@@ -1,12 +1,12 @@
 #!/bin/bash
 #
-# Script sécurisé pour configurer votre CURSOR_API_TOKEN dans .zshrc
+# Script sécurisé pour configurer votre CURSOR_API_KEY dans .zshrc
 # La clé ne sera PAS affichée à l'écran
 #
 
 set -e
 
-echo "🔐 Configuration sécurisée de CURSOR_API_TOKEN"
+echo "🔐 Configuration sécurisée de CURSOR_API_KEY"
 echo ""
 echo "⚠️  IMPORTANT:"
 echo "   1. Révoqué votre ancienne clé dans Cursor → Paramètres → Clés API"
@@ -34,7 +34,7 @@ echo "   (elle ne sera PAS affichée à l'écran)"
 echo ""
 
 # Lire la clé de manière sécurisée (sans l'afficher)
-read -s -p "CURSOR_API_TOKEN: " NEW_TOKEN
+read -s -p "CURSOR_API_KEY: " NEW_TOKEN
 echo ""
 
 # Vérifier que la clé n'est pas vide
@@ -78,5 +78,5 @@ echo "✅ Configuration terminée avec succès!"
 echo ""
 echo "🧪 Pour tester:"
 echo "   source ~/.zshrc"
-echo "   echo \${CURSOR_API_TOKEN:0:10}...  # Affiche les 10 premiers caractères"
+echo "   echo \${CURSOR_API_KEY:0:10}...  # Affiche les 10 premiers caractères"
 

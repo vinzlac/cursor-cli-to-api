@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   api:
     build: .
@@ -10,12 +8,12 @@ services:
       - CURSOR_AGENT_CLI_PATH=${CURSOR_AGENT_CLI_PATH:-cursor-agent}
       - CURSOR_AGENT_HTTP_URL=${CURSOR_AGENT_HTTP_URL:-}
       - CURSOR_AGENT_TIMEOUT=${CURSOR_AGENT_TIMEOUT:-60}
-      - CURSOR_API_TOKEN=${CURSOR_API_TOKEN}
+      - CURSOR_API_KEY=${CURSOR_API_KEY}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - HOST=0.0.0.0
       - PORT=8001
       - RELOAD=false
-    volumes:
+    # volumes:
       # Optionnel: monter le code pour le développement
       # - .:/app
     env_file:

@@ -46,7 +46,7 @@ services:
     environment:
       - CURSOR_AGENT_MODE=http
       - CURSOR_AGENT_HTTP_URL=http://host.docker.internal:3000/api/chat
-      - CURSOR_API_TOKEN=${CURSOR_API_TOKEN}
+      - CURSOR_API_KEY=${CURSOR_API_KEY}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - HOST=0.0.0.0
       - PORT=8001
@@ -88,7 +88,7 @@ services:
     environment:
       - CURSOR_AGENT_MODE=cli
       - CURSOR_AGENT_CLI_PATH=/host-bin/cursor-agent
-      - CURSOR_API_TOKEN=${CURSOR_API_TOKEN}
+      - CURSOR_API_KEY=${CURSOR_API_KEY}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - HOST=0.0.0.0
       - PORT=8001
@@ -131,7 +131,7 @@ services:
       - "8001:8001"
     environment:
       - CURSOR_AGENT_MODE=cli
-      - CURSOR_API_TOKEN=${CURSOR_API_TOKEN}
+      - CURSOR_API_KEY=${CURSOR_API_KEY}
       - LOG_LEVEL=DEBUG
       - HOST=0.0.0.0
       - PORT=8001

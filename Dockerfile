@@ -42,7 +42,7 @@ EXPOSE 8001
 ENV PYTHONUNBUFFERED=1
 ENV RELOAD=false
 
-# Note: CURSOR_API_TOKEN doit être fourni via docker-compose.yml ou --env-file
+# Note: CURSOR_API_KEY doit être fourni via docker-compose.yml ou --env-file
 # Ne jamais coder en dur des clés API dans le Dockerfile !
 
 # Commande par défaut

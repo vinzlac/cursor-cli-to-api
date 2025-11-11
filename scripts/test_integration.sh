@@ -3,7 +3,7 @@
 
 set -e
 
-API_URL="${API_URL:-http://localhost:8000}"
+API_URL="${API_URL:-http://localhost:8001}"
 
 echo "🧪 Tests d'intégration de l'API cursor-agent"
 echo "=============================================="
@@ -11,29 +11,35 @@ echo ""
 
 # Test 1: Health check
 echo "1. Test du health check..."
-HEALTH_RESPONSE=$(curl -s "${API_URL}/health")
-if echo "$HEALTH_RESPONSE" | grep -q "ok"; then
-    echo "✅ Health check réussi"
+HTTP_CODE=$(curl -s -o /tmp/health_response.json -w "%{http_code}" "${API_URL}/health")
+HEALTH_RESPONSE=$(cat /tmp/health_response.json)
+
+if [ "$HTTP_CODE" -eq 200 ] && echo "$HEALTH_RESPONSE" | grep -q "ok"; then
+    echo "✅ Health check réussi (HTTP $HTTP_CODE)"
 else
-    echo "❌ Health check échoué"
+    echo "❌ Health check échoué (HTTP $HTTP_CODE)"
+    echo "Réponse: $HEALTH_RESPONSE"
     exit 1
 fi
 echo ""
 
 # Test 2: Liste des modèles
 echo "2. Test de la liste des modèles..."
-MODELS_RESPONSE=$(curl -s "${API_URL}/v1/models")
-if echo "$MODELS_RESPONSE" | grep -q "cursor-agent"; then
-    echo "✅ Liste des modèles OK"
+HTTP_CODE=$(curl -s -o /tmp/models_response.json -w "%{http_code}" "${API_URL}/v1/models")
+MODELS_RESPONSE=$(cat /tmp/models_response.json)
+
+if [ "$HTTP_CODE" -eq 200 ] && echo "$MODELS_RESPONSE" | grep -q "cursor-agent"; then
+    echo "✅ Liste des modèles OK (HTTP $HTTP_CODE)"
 else
-    echo "❌ Liste des modèles échouée"
+    echo "❌ Liste des modèles échouée (HTTP $HTTP_CODE)"
+    echo "Réponse: $MODELS_RESPONSE"
     exit 1
 fi
 echo ""
 
 # Test 3: Chat completion
 echo "3. Test de chat completion..."
-CHAT_RESPONSE=$(curl -s -X POST "${API_URL}/v1/chat/completions" \
+HTTP_CODE=$(curl -s -o /tmp/chat_response.json -w "%{http_code}" -X POST "${API_URL}/v1/chat/completions" \
     -H "Content-Type: application/json" \
     -d '{
         "model": "cursor-agent",
@@ -41,12 +47,13 @@ CHAT_RESPONSE=$(curl -s -X POST "${API_URL}/v1/chat/completions" \
             {"role": "user", "content": "Bonjour"}
         ]
     }')
+CHAT_RESPONSE=$(cat /tmp/chat_response.json)
 
-if echo "$CHAT_RESPONSE" | grep -q "choices"; then
-    echo "✅ Chat completion réussi"
-    echo "Réponse: $(echo "$CHAT_RESPONSE" | grep -o '"content":"[^"]*"')"
+if [ "$HTTP_CODE" -eq 200 ] && echo "$CHAT_RESPONSE" | grep -q "choices"; then
+    echo "✅ Chat completion réussi (HTTP $HTTP_CODE)"
+    echo "Réponse: $(echo "$CHAT_RESPONSE" | grep -o '"content":"[^"]*"' | head -1)"
 else
-    echo "❌ Chat completion échoué"
+    echo "❌ Chat completion échoué (HTTP $HTTP_CODE)"
     echo "Réponse: $CHAT_RESPONSE"
     exit 1
 fi
@@ -60,6 +67,9 @@ else
     echo "⚠️  Format peut ne pas être compatible OpenAI"
 fi
 echo ""
+
+# Nettoyage des fichiers temporaires
+rm -f /tmp/health_response.json /tmp/models_response.json /tmp/chat_response.json
 
 echo "=============================================="
 echo "✅ Tous les tests d'intégration sont passés!"

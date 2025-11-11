@@ -5,7 +5,7 @@ Ce guide explique comment utiliser cursor-cli-to-api avec Docker et Docker Compo
 ## 📋 Prérequis
 
 - Docker et Docker Compose installés
-- Votre token `CURSOR_API_TOKEN` (depuis Cursor → Settings → API Keys)
+- Votre token `CURSOR_API_KEY` (depuis Cursor → Settings → API Keys)
 
 ## ℹ️ Note importante sur cursor-agent
 
@@ -37,9 +37,9 @@ just update-cursor-token
 nano .env
 
 # Remplacer:
-# CURSOR_API_TOKEN=VOTRE_TOKEN_CURSOR_ICI
+# CURSOR_API_KEY=VOTRE_TOKEN_CURSOR_ICI
 # Par:
-# CURSOR_API_TOKEN=votre_vraie_clé_cursor
+# CURSOR_API_KEY=votre_vraie_clé_cursor
 ```
 
 ### 2️⃣ Lancer avec Docker Compose
@@ -84,7 +84,7 @@ environment:
   - CURSOR_AGENT_CLI_PATH=${CURSOR_AGENT_CLI_PATH:-cursor-agent}
   - CURSOR_AGENT_HTTP_URL=${CURSOR_AGENT_HTTP_URL:-}
   - CURSOR_AGENT_TIMEOUT=${CURSOR_AGENT_TIMEOUT:-60}
-  - CURSOR_API_TOKEN=${CURSOR_API_TOKEN}  # ← Token d'authentification
+  - CURSOR_API_KEY=${CURSOR_API_KEY}  # ← Token d'authentification
   - LOG_LEVEL=${LOG_LEVEL:-INFO}
   - HOST=0.0.0.0
   - PORT=8001
@@ -110,7 +110,7 @@ Dans `.env`:
 ```bash
 CURSOR_AGENT_MODE=http
 CURSOR_AGENT_HTTP_URL=http://localhost:3000/api/chat
-CURSOR_API_TOKEN=votre_token
+CURSOR_API_KEY=votre_token
 ```
 
 ## 📊 Gestion du conteneur
@@ -155,10 +155,10 @@ just docker-down      # Arrêter
 docker-compose exec api bash
 
 # Vérifier les variables d'environnement
-echo $CURSOR_API_TOKEN
+echo $CURSOR_API_KEY
 
 # Tester la config Python
-python -c "from config import settings; print(settings.cursor_api_token[:10] + '...')"
+python -c "from config import settings; print(settings.cursor_api_key[:10] + '...')"
 ```
 
 ### Voir les logs détaillés
@@ -200,7 +200,7 @@ docker-compose restart
 ```bash
 CURSOR_AGENT_MODE=cli
 CURSOR_AGENT_CLI_PATH=cursor-agent
-CURSOR_API_TOKEN=votre_token
+CURSOR_API_KEY=votre_token
 ```
 
 Le token est passé comme variable d'environnement au processus CLI.
@@ -210,7 +210,7 @@ Le token est passé comme variable d'environnement au processus CLI.
 ```bash
 CURSOR_AGENT_MODE=http
 CURSOR_AGENT_HTTP_URL=http://api.cursor.com/v1/chat
-CURSOR_API_TOKEN=votre_token
+CURSOR_API_KEY=votre_token
 ```
 
 Le token est passé dans le header `Authorization: Bearer TOKEN`.
@@ -219,10 +219,10 @@ Le token est passé dans le header `Authorization: Bearer TOKEN`.
 
 ```bash
 CURSOR_AGENT_MODE=library
-CURSOR_API_TOKEN=votre_token
+CURSOR_API_KEY=votre_token
 ```
 
-Le token est disponible dans `settings.cursor_api_token` pour votre code.
+Le token est disponible dans `settings.cursor_api_key` pour votre code.
 
 ## 📦 Build multi-stage (optimisé)
 
@@ -265,7 +265,7 @@ services:
     restart: always
     environment:
       - CURSOR_AGENT_MODE=cli
-      - CURSOR_API_TOKEN=${CURSOR_API_TOKEN}
+      - CURSOR_API_KEY=${CURSOR_API_KEY}
       - LOG_LEVEL=INFO
       - HOST=0.0.0.0
       - PORT=8001

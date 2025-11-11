@@ -154,7 +154,7 @@ setup-env:
     @echo "⚙️  Configuration du fichier .env..."
     @./scripts/setup-env.sh
 
-# Configure le token CURSOR_API_TOKEN dans .env (pour Docker)
+# Configure le token CURSOR_API_KEY dans .env (pour Docker)
 update-cursor-token:
     @echo "🔑 Configuration du token Cursor pour Docker..."
     @./scripts/update-cursor-token.sh

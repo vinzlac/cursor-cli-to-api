@@ -134,8 +134,9 @@ async def _call_cursor_agent_cli(prompt: str) -> str:
     
     # Préparer l'environnement avec le token si disponible
     env = os.environ.copy()
-    if settings.cursor_api_token:
-        env["CURSOR_API_TOKEN"] = settings.cursor_api_token
+    if settings.cursor_api_key:
+        # cursor-agent attend CURSOR_API_KEY
+        env["CURSOR_API_KEY"] = settings.cursor_api_key
     
     # Exécuter dans un thread pour ne pas bloquer l'event loop
     loop = asyncio.get_event_loop()
@@ -168,8 +169,8 @@ async def _call_cursor_agent_http(messages: List[Message]) -> str:
     
     # Préparer les headers avec authentification si token disponible
     headers = {}
-    if settings.cursor_api_token:
-        headers["Authorization"] = f"Bearer {settings.cursor_api_token}"
+    if settings.cursor_api_key:
+        headers["Authorization"] = f"Bearer {settings.cursor_api_key}"
     
     async with httpx.AsyncClient(timeout=settings.cursor_agent_timeout) as client:
         response = await client.post(url, json=payload, headers=headers)

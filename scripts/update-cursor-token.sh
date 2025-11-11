@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-# Script pour mettre à jour CURSOR_API_TOKEN dans .env de manière sécurisée
+# Script pour mettre à jour CURSOR_API_KEY dans .env de manière sécurisée
 # Usage: ./scripts/update-cursor-token.sh
 
 set -e
 
-echo "🔑 Configuration de CURSOR_API_TOKEN pour Docker"
+echo "🔑 Configuration de CURSOR_API_KEY pour Docker"
 echo "================================================"
 echo ""
 echo "Ce token est nécessaire pour que cursor-agent puisse"
@@ -25,9 +25,9 @@ if [ ! -f .env ]; then
     exit 1
 fi
 
-# Vérifier si CURSOR_API_TOKEN existe déjà
-if grep -q "^CURSOR_API_TOKEN=" .env; then
-    current_token=$(grep "^CURSOR_API_TOKEN=" .env | cut -d= -f2)
+# Vérifier si CURSOR_API_KEY existe déjà
+if grep -q "^CURSOR_API_KEY=" .env; then
+    current_token=$(grep "^CURSOR_API_KEY=" .env | cut -d= -f2)
     if [ "$current_token" != "VOTRE_TOKEN_CURSOR_ICI" ] && [ -n "$current_token" ]; then
         echo "⚠️  Un token est déjà configuré dans .env"
         echo "   Token actuel: ${current_token:0:20}..."
@@ -43,7 +43,7 @@ fi
 
 # Demander le nouveau token
 echo ""
-echo "📝 Entrez votre CURSOR_API_TOKEN:"
+echo "📝 Entrez votre CURSOR_API_KEY:"
 echo "   (Disponible dans: Cursor → Settings → API Keys)"
 echo ""
 read -p "Token: " -r new_token
@@ -60,18 +60,18 @@ if [ "$new_token" = "VOTRE_TOKEN_CURSOR_ICI" ]; then
 fi
 
 # Mettre à jour le fichier .env
-if grep -q "^CURSOR_API_TOKEN=" .env; then
+if grep -q "^CURSOR_API_KEY=" .env; then
     # Remplacer la ligne existante (compatible macOS et Linux)
     if [[ "$OSTYPE" == "darwin"* ]]; then
-        sed -i '' "s|^CURSOR_API_TOKEN=.*|CURSOR_API_TOKEN=$new_token|" .env
+        sed -i '' "s|^CURSOR_API_KEY=.*|CURSOR_API_KEY=$new_token|" .env
     else
-        sed -i "s|^CURSOR_API_TOKEN=.*|CURSOR_API_TOKEN=$new_token|" .env
+        sed -i "s|^CURSOR_API_KEY=.*|CURSOR_API_KEY=$new_token|" .env
     fi
     echo "✅ Token mis à jour dans .env"
 else
     # Ajouter la ligne
     echo "" >> .env
-    echo "CURSOR_API_TOKEN=$new_token" >> .env
+    echo "CURSOR_API_KEY=$new_token" >> .env
     echo "✅ Token ajouté dans .env"
 fi
 
