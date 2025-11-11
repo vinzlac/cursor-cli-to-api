@@ -90,6 +90,29 @@ test-watch:
     @echo "👀 Lancement des tests en mode watch..."
     uv run ptw tests || echo "⚠️  pytest-watch non disponible: uv pip install pytest-watch"
 
+# Lance les tests d'intégration bash (curl)
+test-integration:
+    @echo "🧪 Lancement des tests d'intégration (bash/curl)..."
+    @./scripts/test_integration.sh
+
+# Lance les tests d'intégration Python (client OpenAI)
+test-integration-python:
+    #!/usr/bin/env bash
+    echo "🧪 Lancement des tests d'intégration (Python/OpenAI client)..."
+    if [ -f .env ]; then
+        echo "⚙️  Chargement de l'API_KEY depuis .env..."
+        export $(grep "^API_KEY=" .env | xargs)
+    fi
+    if [ -z "$API_KEY" ]; then
+        echo "⚠️  API_KEY non trouvée. Les tests vont être ignorés."
+        echo "   Définissez API_KEY dans .env ou en variable d'environnement."
+    fi
+    uv run pytest tests/test_integration_openai.py -v
+
+# Lance tous les tests (unitaires + intégration bash + intégration Python)
+test-all: test test-integration test-integration-python
+    @echo "✅ Tous les tests terminés!"
+
 # Nettoie les fichiers générés (cache, venv, etc.)
 clean:
     @echo "🧹 Nettoyage des fichiers générés..."
@@ -158,11 +181,6 @@ setup-env:
 update-cursor-token:
     @echo "🔑 Configuration du token Cursor pour Docker..."
     @./scripts/update-cursor-token.sh
-
-# Lance les tests d'intégration
-test-integration:
-    @echo "🔗 Lancement des tests d'intégration..."
-    @./scripts/test_integration.sh
 
 # Build l'image Docker
 docker-build:

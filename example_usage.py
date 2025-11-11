@@ -6,14 +6,27 @@ Pour installer les dépendances:
 
 Pour exécuter:
     uv run python example_usage.py
+
+Note: Assurez-vous que API_KEY est définie dans .env ou en variable d'environnement
 """
 from openai import OpenAI
 import os
+from dotenv import load_dotenv
+
+# Charger les variables d'environnement depuis .env
+load_dotenv()
+
+# Récupérer l'API_KEY
+API_KEY = os.getenv("API_KEY")
+if not API_KEY:
+    print("⚠️  AVERTISSEMENT: API_KEY non trouvée dans .env")
+    print("Si l'authentification est activée sur le serveur, les requêtes échoueront.")
+    API_KEY = "dummy-key"
 
 # Configuration du client pour pointer vers votre proxy local
 client = OpenAI(
     base_url="http://localhost:8001/v1",  # URL de votre proxy
-    api_key="not-needed"  # Clé non utilisée mais requise par la bibliothèque
+    api_key=API_KEY  # API key pour authentification
 )
 
 
