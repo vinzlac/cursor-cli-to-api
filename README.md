@@ -39,6 +39,29 @@ brew install just
 cargo install just
 ```
 
+### Installer cursor-agent
+
+**Pour développement local (mode CLI):**
+
+```bash
+# Installation officielle de cursor-agent
+curl https://cursor.com/install -fsS | bash
+
+# Vérifier l'installation
+cursor-agent --version
+# Devrait afficher: 2025.11.06-8fe8a63 (ou version similaire)
+
+# Vérifier que cursor-agent est dans le PATH
+which cursor-agent
+# Devrait afficher: /Users/VOTRE_USER/.local/bin/cursor-agent
+```
+
+**Pour Docker:**
+cursor-agent est automatiquement installé dans le conteneur Docker (voir `Dockerfile`). Aucune installation locale n'est requise si vous utilisez uniquement Docker.
+
+**Alternative : Mode HTTP**
+Si vous ne souhaitez pas installer cursor-agent localement, vous pouvez utiliser le mode HTTP en configurant `CURSOR_AGENT_MODE=http` dans `.env`. Dans ce cas, cursor-agent n'est pas nécessaire.
+
 ## 🚀 Installation
 
 **Méthode recommandée (avec uv sync):**

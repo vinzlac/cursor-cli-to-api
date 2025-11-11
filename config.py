@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     cursor_agent_cli_path: Optional[str] = None  # Chemin vers l'exécutable CLI
     cursor_agent_http_url: Optional[str] = None  # URL de l'API HTTP si mode=http
     cursor_agent_timeout: int = 60  # Timeout en secondes
+    cursor_api_token: Optional[str] = None  # Token d'authentification pour cursor-agent
     
     # API
     api_title: str = "Cursor Agent API Proxy"

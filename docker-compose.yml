@@ -4,15 +4,16 @@ services:
   api:
     build: .
     ports:
-      - "8000:8000"
+      - "8001:8001"
     environment:
       - CURSOR_AGENT_MODE=${CURSOR_AGENT_MODE:-cli}
       - CURSOR_AGENT_CLI_PATH=${CURSOR_AGENT_CLI_PATH:-cursor-agent}
       - CURSOR_AGENT_HTTP_URL=${CURSOR_AGENT_HTTP_URL:-}
       - CURSOR_AGENT_TIMEOUT=${CURSOR_AGENT_TIMEOUT:-60}
+      - CURSOR_API_TOKEN=${CURSOR_API_TOKEN}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - HOST=0.0.0.0
-      - PORT=8000
+      - PORT=8001
       - RELOAD=false
     volumes:
       # Optionnel: monter le code pour le développement
@@ -21,7 +22,7 @@ services:
       - .env
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
       interval: 30s
       timeout: 10s
       retries: 3

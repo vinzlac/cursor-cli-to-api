@@ -1,0 +1,171 @@
+# Configurations alternatives Docker Compose pour cursor-cli-to-api
+#
+# Ce fichier contient différentes configurations Docker selon vos besoins.
+# Copiez la configuration souhaitée dans docker-compose.yml
+
+version: '3.8'
+
+# ============================================================================
+# OPTION 1 : Mode CLI avec cursor-agent installé dans le conteneur (DÉFAUT)
+# ============================================================================
+# cursor-agent est automatiquement installé lors du build Docker
+# C'est la configuration par défaut dans docker-compose.yml
+#
+# Avantages:
+#   ✅ Autonome, pas de dépendance externe
+#   ✅ Portable, fonctionne partout
+#   ✅ Build reproductible
+#
+# Inconvénients:
+#   ⚠️ Build initial plus long (~3-5 minutes)
+#   ⚠️ Image Docker plus volumineuse (~500MB)
+#
+# Usage: Voir docker-compose.yml (configuration actuelle)
+
+
+# ============================================================================
+# OPTION 2 : Mode HTTP (sans cursor-agent dans le conteneur)
+# ============================================================================
+# Utilise cursor-agent en mode serveur HTTP sur l'hôte ou distant
+#
+# Avantages:
+#   ✅ Build Docker rapide
+#   ✅ Image Docker légère (~200MB)
+#   ✅ cursor-agent peut tourner ailleurs (hôte, autre serveur)
+#
+# Inconvénients:
+#   ⚠️ Nécessite un serveur cursor-agent HTTP accessible
+#   ⚠️ Configuration réseau plus complexe
+#
+# Configuration:
+services:
+  api-http-mode:
+    build: .
+    ports:
+      - "8001:8001"
+    environment:
+      - CURSOR_AGENT_MODE=http
+      - CURSOR_AGENT_HTTP_URL=http://host.docker.internal:3000/api/chat
+      - CURSOR_API_TOKEN=${CURSOR_API_TOKEN}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - HOST=0.0.0.0
+      - PORT=8001
+      - RELOAD=false
+    env_file:
+      - .env
+    restart: unless-stopped
+    extra_hosts:
+      # Permet au conteneur d'accéder à l'hôte via host.docker.internal
+      - "host.docker.internal:host-gateway"
+
+# Pour utiliser cette configuration:
+# 1. Lancer cursor-agent en mode HTTP sur l'hôte:
+#    cursor-agent serve --port 3000
+# 2. Copier la section 'api-http-mode' dans docker-compose.yml
+# 3. docker-compose up
+
+
+# ============================================================================
+# OPTION 3 : Monter cursor-agent depuis l'hôte (développement)
+# ============================================================================
+# Monte le binaire cursor-agent depuis la machine hôte dans le conteneur
+#
+# Avantages:
+#   ✅ Pas besoin d'installer cursor-agent dans le conteneur
+#   ✅ Utilise la version de l'hôte (toujours à jour)
+#
+# Inconvénients:
+#   ⚠️ Moins portable (dépend de l'hôte)
+#   ⚠️ Peut avoir des problèmes de compatibilité OS/arch
+#   ⚠️ Ne fonctionne que sur Linux/Mac (pas Windows)
+#
+# Configuration:
+services:
+  api-mount-mode:
+    build: .
+    ports:
+      - "8001:8001"
+    environment:
+      - CURSOR_AGENT_MODE=cli
+      - CURSOR_AGENT_CLI_PATH=/host-bin/cursor-agent
+      - CURSOR_API_TOKEN=${CURSOR_API_TOKEN}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - HOST=0.0.0.0
+      - PORT=8001
+      - RELOAD=false
+    volumes:
+      # Monter cursor-agent depuis l'hôte
+      # ⚠️ Ajustez le chemin selon votre installation
+      - ~/.local/bin/cursor-agent:/host-bin/cursor-agent:ro
+      - ~/.local/share/cursor-agent:/root/.local/share/cursor-agent:ro
+    env_file:
+      - .env
+    restart: unless-stopped
+
+# Pour utiliser cette configuration:
+# 1. Vérifier où est installé cursor-agent: which cursor-agent
+# 2. Ajuster les chemins de volumes si nécessaire
+# 3. Copier la section 'api-mount-mode' dans docker-compose.yml
+# 4. docker-compose up
+
+
+# ============================================================================
+# OPTION 4 : Mode développement avec rechargement automatique
+# ============================================================================
+# Monte le code source pour le développement avec hot reload
+#
+# Avantages:
+#   ✅ Changements de code instantanés (pas besoin de rebuild)
+#   ✅ Logs en temps réel
+#   ✅ Idéal pour le développement
+#
+# Inconvénients:
+#   ⚠️ Ne doit PAS être utilisé en production
+#   ⚠️ Performance légèrement réduite
+#
+# Configuration:
+services:
+  api-dev-mode:
+    build: .
+    ports:
+      - "8001:8001"
+    environment:
+      - CURSOR_AGENT_MODE=cli
+      - CURSOR_API_TOKEN=${CURSOR_API_TOKEN}
+      - LOG_LEVEL=DEBUG
+      - HOST=0.0.0.0
+      - PORT=8001
+      - RELOAD=true  # Active le hot reload
+    volumes:
+      # Monte le code source pour le hot reload
+      - .:/app
+      # Exclut le venv pour éviter les conflits
+      - /app/.venv
+    env_file:
+      - .env
+    restart: unless-stopped
+
+# Pour utiliser cette configuration:
+# 1. Copier la section 'api-dev-mode' dans docker-compose.yml
+# 2. docker-compose up
+# 3. Modifier le code, il sera rechargé automatiquement
+
+
+# ============================================================================
+# COMPARAISON DES OPTIONS
+# ============================================================================
+#
+# ┌─────────────┬──────────┬──────────┬─────────────┬──────────────┐
+# │ Option      │ Build    │ Taille   │ Portable    │ Maintenance  │
+# ├─────────────┼──────────┼──────────┼─────────────┼──────────────┤
+# │ CLI (défaut)│ ~5 min   │ ~500 MB  │ ✅ Oui      │ ✅ Facile    │
+# │ HTTP        │ ~2 min   │ ~200 MB  │ ⚠️ Partiel  │ ⚠️ Moyenne   │
+# │ Mount       │ ~2 min   │ ~200 MB  │ ❌ Non      │ ❌ Complexe  │
+# │ Dev         │ ~2 min   │ ~200 MB  │ ❌ Non      │ ✅ Facile    │
+# └─────────────┴──────────┴──────────┴─────────────┴──────────────┘
+#
+# RECOMMANDATION:
+#   - Production: Option 1 (CLI avec cursor-agent installé)
+#   - Développement: Option 4 (Dev mode avec hot reload)
+#   - Architecture distribuée: Option 2 (HTTP)
+

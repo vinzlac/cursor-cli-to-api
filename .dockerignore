@@ -4,53 +4,54 @@ __pycache__/
 *$py.class
 *.so
 .Python
-*.egg-info/
-.eggs/
-
-# Virtual environments
+.venv/
 venv/
 env/
 ENV/
-.venv
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment
+.env
+.env.local
+.env.*.local
+*.log
+server.log
+
+# Git
+.git/
+.gitignore
+.github/
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
+.DS_Store
 
-# Environment
-.env
-.env.local
-.env.*.local
-
-# Git
-.git/
-.gitignore
-
-# Documentation
+# Documentation (déjà dans l'image)
 *.md
 !README.md
 
-# Tests
+# Tests (pas nécessaires en production)
 tests/
 .pytest_cache/
-.coverage
-htmlcov/
 
-# Logs
-*.log
+# Scripts de développement
+scripts/test_integration.sh
+scripts/setup-env.sh
+scripts/setup-cursor-token.sh
+scripts/update-cursor-token.sh
 
-# OS
-.DS_Store
-Thumbs.db
+# Autres
+.cursorignore
+example_usage.py
+justfile
 
-# Build
-build/
-dist/
-*.egg
-
-# Other
-.dockerignore
-docker-compose.yml
-Dockerfile
+# Note: uv.lock est NÉCESSAIRE pour uv sync --frozen, ne pas l'exclure !

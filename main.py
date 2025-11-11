@@ -11,6 +11,7 @@ import subprocess
 import httpx
 import uuid
 import logging
+import os
 from datetime import datetime
 
 from config import settings
@@ -131,6 +132,11 @@ async def _call_cursor_agent_cli(prompt: str) -> str:
     """Appel via CLI"""
     cli_path = settings.cursor_agent_cli_path or "cursor-agent"
     
+    # Préparer l'environnement avec le token si disponible
+    env = os.environ.copy()
+    if settings.cursor_api_token:
+        env["CURSOR_API_TOKEN"] = settings.cursor_api_token
+    
     # Exécuter dans un thread pour ne pas bloquer l'event loop
     loop = asyncio.get_event_loop()
     result = await loop.run_in_executor(
@@ -139,7 +145,8 @@ async def _call_cursor_agent_cli(prompt: str) -> str:
             [cli_path, prompt],
             capture_output=True,
             text=True,
-            timeout=settings.cursor_agent_timeout
+            timeout=settings.cursor_agent_timeout,
+            env=env
         )
     )
     
@@ -159,8 +166,13 @@ async def _call_cursor_agent_http(messages: List[Message]) -> str:
         "messages": [{"role": msg.role, "content": msg.content} for msg in messages]
     }
     
+    # Préparer les headers avec authentification si token disponible
+    headers = {}
+    if settings.cursor_api_token:
+        headers["Authorization"] = f"Bearer {settings.cursor_api_token}"
+    
     async with httpx.AsyncClient(timeout=settings.cursor_agent_timeout) as client:
-        response = await client.post(url, json=payload)
+        response = await client.post(url, json=payload, headers=headers)
         response.raise_for_status()
         data = response.json()
         
