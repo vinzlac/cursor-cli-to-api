@@ -6,6 +6,94 @@ Proxy FastAPI pour cursor-agent compatible avec l'API OpenAI/ChatGPT.
 
 Ce projet permet d'exposer cursor-agent via une API REST compatible avec l'API OpenAI, permettant ainsi d'utiliser cursor-agent avec n'importe quel client compatible OpenAI (comme les bibliothèques `openai` en Python, JavaScript, etc.).
 
+## 🏗️ Architecture
+
+Le diagramme ci-dessous illustre le flux de communication entre les différents composants du système :
+
+```mermaid
+sequenceDiagram
+    participant User as 👤 User/Client
+    participant Proxy as 🔄 cursor-openai-proxy<br/>(FastAPI)
+    participant Agent as 🤖 cursor-agent<br/>(CLI)
+    participant LLM as 🧠 LLM<br/>(GPT-5/Claude/Grok)
+
+    Note over User,LLM: Requête de chat completion
+
+    User->>Proxy: POST /v1/chat/completions<br/>{model: "gpt-4o", messages: [...]}
+    
+    activate Proxy
+    Note over Proxy: 1. Authentification<br/>(API_KEY)
+    
+    alt API_KEY invalide
+        Proxy-->>User: 401/403 Unauthorized
+    end
+    
+    Note over Proxy: 2. Mapping du modèle<br/>gpt-4o → gpt-5
+    
+    Proxy->>Agent: cursor-agent --model gpt-5 "user: Hello"
+    activate Agent
+    
+    Note over Agent: Préparation de la requête<br/>avec CURSOR_API_KEY
+    
+    Agent->>LLM: Appel API du LLM<br/>(GPT-5, Claude 4.5, etc.)
+    activate LLM
+    
+    Note over LLM: Traitement de la requête
+    
+    LLM-->>Agent: Réponse du modèle
+    deactivate LLM
+    
+    Agent-->>Proxy: Texte de réponse
+    deactivate Agent
+    
+    Note over Proxy: 3. Formatage OpenAI-compatible<br/>{id, object, choices, usage}
+    
+    Proxy-->>User: 200 OK<br/>Response OpenAI-compatible
+    deactivate Proxy
+
+    Note over User,LLM: Streaming (optionnel)
+    
+    User->>Proxy: POST /v1/chat/completions<br/>{stream: true, ...}
+    activate Proxy
+    Proxy->>Agent: cursor-agent --model gpt-5 "..."
+    activate Agent
+    Agent->>LLM: Appel API streaming
+    activate LLM
+    
+    loop Tokens en streaming
+        LLM-->>Agent: Token chunk
+        Agent-->>Proxy: Token chunk
+        Proxy-->>User: SSE: data: {chunk}
+    end
+    
+    LLM-->>Agent: [DONE]
+    deactivate LLM
+    Agent-->>Proxy: Fin du stream
+    deactivate Agent
+    Proxy-->>User: SSE: data: [DONE]
+    deactivate Proxy
+
+    Note over User,LLM: Liste des modèles
+    
+    User->>Proxy: GET /v1/models
+    activate Proxy
+    Note over Proxy: Retourne 17 modèles<br/>(9 natifs + 8 alias)
+    Proxy-->>User: 200 OK<br/>{data: [models]}
+    deactivate Proxy
+```
+
+### Légende
+
+- **User/Client** : Application utilisant le client OpenAI Python, JavaScript, ou requêtes curl
+- **cursor-openai-proxy** : Serveur FastAPI qui expose l'API compatible OpenAI
+  - Authentification via API_KEY
+  - Mapping automatique des modèles (gpt-4o → gpt-5, claude-3-5-sonnet → sonnet-4.5)
+  - Formatage des réponses au format OpenAI
+- **cursor-agent** : CLI officiel de Cursor pour interagir avec les LLMs
+  - Utilise CURSOR_API_KEY pour l'authentification
+  - Supporte 9 modèles natifs : auto, composer-1, gpt-5, gpt-5-codex, sonnet-4.5, opus-4.1, grok, etc.
+- **LLM** : Modèles de langage (GPT-5, Claude 4.5, Opus 4.1, Grok, etc.)
+
 ## 📋 Prérequis
 
 - Python 3.8+
