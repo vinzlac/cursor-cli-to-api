@@ -279,6 +279,7 @@ docker-compose-insecure:
     # NE PAS utiliser env_file dans docker-compose pour éviter d'exposer tout le .env
     export CURSOR_API_KEY=$(grep "^CURSOR_API_KEY=" .env | cut -d= -f2- | tr -d '"' | tr -d "'")
     export CURSOR_AGENT_MODE=${CURSOR_AGENT_MODE:-cli}
+    export CURSOR_AGENT_TIMEOUT=${CURSOR_AGENT_TIMEOUT:-120}
     export LOG_LEVEL=${LOG_LEVEL:-INFO}
     
     if [ -z "$CURSOR_API_KEY" ]; then
@@ -362,6 +363,7 @@ docker-run-secure:
         -e CURSOR_API_KEY="$CURSOR_API_KEY" \
         -e API_KEY="$API_KEY" \
         -e CURSOR_AGENT_MODE="$CURSOR_AGENT_MODE" \
+        -e CURSOR_AGENT_TIMEOUT="${CURSOR_AGENT_TIMEOUT:-120}" \
         -e LOG_LEVEL="$LOG_LEVEL" \
         -e HOST=0.0.0.0 \
         -e PORT=8001 \
@@ -390,6 +392,7 @@ docker-run-insecure:
     # Charger uniquement CURSOR_API_KEY depuis .env (pas API_KEY)
     export CURSOR_API_KEY=$(grep "^CURSOR_API_KEY=" .env | cut -d= -f2- | tr -d '"' | tr -d "'")
     export CURSOR_AGENT_MODE=${CURSOR_AGENT_MODE:-cli}
+    export CURSOR_AGENT_TIMEOUT=${CURSOR_AGENT_TIMEOUT:-120}
     export LOG_LEVEL=${LOG_LEVEL:-INFO}
     
     if [ -z "$CURSOR_API_KEY" ]; then
@@ -405,6 +408,7 @@ docker-run-insecure:
         -p 8001:8001 \
         -e CURSOR_API_KEY="$CURSOR_API_KEY" \
         -e CURSOR_AGENT_MODE="$CURSOR_AGENT_MODE" \
+        -e CURSOR_AGENT_TIMEOUT="${CURSOR_AGENT_TIMEOUT:-120}" \
         -e LOG_LEVEL="$LOG_LEVEL" \
         -e HOST=0.0.0.0 \
         -e PORT=8001 \
@@ -457,6 +461,16 @@ docker-run-logs-insecure:
 test-performance:
     @echo "⚡ Test de performance..."
     @./scripts/test-performance.sh
+
+# Diagnostic Docker
+docker-diagnose:
+    @echo "🔍 Diagnostic Docker..."
+    @./scripts/docker-diagnose.sh
+
+# Tester cursor-agent dans Docker
+docker-test-cursor:
+    @echo "🧪 Test cursor-agent dans Docker..."
+    @./scripts/docker-test-cursor.sh
 
 # Vérifier le mode HTTP
 test-http-mode:

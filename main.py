@@ -340,10 +340,11 @@ async def _call_cursor_agent_cli(prompt: str, model: str) -> str:
     
     # Construire la commande avec le modèle
     # Utiliser --print pour le mode non-interactif (plus rapide pour les scripts)
-    # Utiliser --output-format text pour éviter le parsing JSON (plus rapide)
+    # Note: --output-format text ralentit cursor-agent dans Docker, donc on ne l'utilise pas
     # Format: cursor-agent --print --model <model> <prompt>
-    cmd = [cli_path, "--print", "--output-format", "text", "--model", model, prompt]
-    logger.debug(f"Commande cursor-agent: {' '.join(cmd[:5])}... (prompt: {len(prompt)} chars)")
+    cmd = [cli_path, "--print", "--model", model, prompt]
+    logger.info(f"Commande cursor-agent: {' '.join(cmd[:5])}... (prompt: {len(prompt)} chars)")
+    logger.debug(f"Prompt complet: {prompt[:200]}...")
     
     # Mesurer le temps avant l'appel subprocess
     pre_subprocess_time = time.time()
@@ -358,16 +359,24 @@ async def _call_cursor_agent_cli(prompt: str, model: str) -> str:
     # 4. Traiter la requête
     # C'est pourquoi c'est plus lent qu'un appel CLI direct où cursor-agent reste en mémoire
     loop = asyncio.get_event_loop()
-    result = await loop.run_in_executor(
-        None,
-        lambda: subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=settings.cursor_agent_timeout,
-            env=env
-        )
-    )
+    
+    def run_subprocess():
+        try:
+            return subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=settings.cursor_agent_timeout,
+                env=env
+            )
+        except subprocess.TimeoutExpired as e:
+            logger.error(f"Timeout subprocess: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Erreur subprocess: {e}")
+            raise
+    
+    result = await loop.run_in_executor(None, run_subprocess)
     
     # Mesurer le temps après l'appel subprocess
     post_subprocess_time = time.time()
@@ -375,9 +384,23 @@ async def _call_cursor_agent_cli(prompt: str, model: str) -> str:
     total_duration = (post_subprocess_time - start_time) * 1000
     logger.info(f"cursor-agent subprocess: {subprocess_duration:.2f}ms (total: {total_duration:.2f}ms)")
     
+    # Logs détaillés pour le débogage
+    logger.debug(f"Return code: {result.returncode}")
+    if result.stdout:
+        logger.debug(f"Stdout (premiers 200 chars): {result.stdout[:200]}")
+    if result.stderr:
+        logger.debug(f"Stderr (premiers 200 chars): {result.stderr[:200]}")
+    
     if result.returncode != 0:
-        logger.error(f"cursor-agent stderr: {result.stderr[:500]}")
-        raise RuntimeError(f"cursor-agent a retourné le code {result.returncode}: {result.stderr}")
+        error_msg = result.stderr[:500] if result.stderr else "Pas de message d'erreur"
+        logger.error(f"cursor-agent stderr: {error_msg}")
+        logger.error(f"cursor-agent stdout: {result.stdout[:500] if result.stdout else 'Vide'}")
+        raise RuntimeError(f"cursor-agent a retourné le code {result.returncode}: {error_msg}")
+    
+    if not result.stdout or not result.stdout.strip():
+        logger.warning("cursor-agent n'a retourné aucune sortie")
+        logger.warning(f"Stderr disponible: {result.stderr[:500] if result.stderr else 'Non'}")
+        raise RuntimeError("cursor-agent n'a retourné aucune réponse")
     
     return result.stdout.strip()
 

@@ -9,13 +9,16 @@ RUN apt-get update && apt-get install -y \
 
 # Installer cursor-agent (CLI officiel de Cursor)
 # Note: cursor-agent inclut Node.js et tous les dépendances nécessaires
-RUN curl -fsSL https://cursor.com/install | bash
+RUN curl -fsSL https://cursor.com/install | bash || (echo "Erreur lors de l'installation de cursor-agent" && exit 1)
 
 # Ajouter cursor-agent au PATH
 ENV PATH="/root/.local/bin:${PATH}"
 
-# Vérifier que cursor-agent est bien installé
-RUN cursor-agent --version || echo "Warning: cursor-agent installation may have failed"
+# Vérifier que cursor-agent est bien installé et accessible
+RUN cursor-agent --version || (echo "ERREUR: cursor-agent n'est pas accessible après installation" && exit 1)
+
+# Vérifier que cursor-agent peut être exécuté
+RUN cursor-agent --help > /dev/null 2>&1 || (echo "ERREUR: cursor-agent ne peut pas être exécuté" && exit 1)
 
 # Installer uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
