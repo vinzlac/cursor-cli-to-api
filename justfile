@@ -242,3 +242,18 @@ docker-down:
 docker-logs:
     @echo "📋 Logs Docker..."
     docker-compose logs -f
+
+# Tester les performances
+test-performance:
+    @echo "⚡ Test de performance..."
+    @./scripts/test-performance.sh
+
+# Vérifier le mode HTTP
+test-http-mode:
+    @echo "🔍 Vérification du mode HTTP..."
+    @./scripts/test-http-mode.sh
+
+# Tester cursor-agent en CLI direct
+test-cli-direct:
+    @echo "⚡ Test de performance cursor-agent CLI direct..."
+    @./scripts/test-cli-direct.sh

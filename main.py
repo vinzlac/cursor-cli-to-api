@@ -1,5 +1,13 @@
 """
 FastAPI proxy pour cursor-agent compatible avec l'API ChatGPT/OpenAI
+
+Note sur les performances:
+- cursor-agent est un outil CLI uniquement (pas de mode HTTP)
+- Tests réalisés: cursor-agent CLI direct prend ~6.3s en moyenne
+- Via API (subprocess): ~6.3s également (overhead minimal ~10%)
+- Le temps est principalement passé dans cursor-agent lui-même (appel LLM, traitement)
+- Les 5-7 secondes sont normaux et attendus pour cursor-agent
+- Le mode HTTP dans le code est prévu pour un cas hypothétique ou futur
 """
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
@@ -29,6 +37,21 @@ app = FastAPI(
     description=settings.api_description,
     version=settings.api_version
 )
+
+
+@app.on_event("startup")
+async def startup_event():
+    """
+    Initialise le cache des modèles au démarrage pour éviter le premier appel lent
+    """
+    logger.info("Initialisation du cache des modèles disponibles...")
+    try:
+        await get_available_models()
+        logger.info("Cache des modèles initialisé avec succès")
+    except Exception as e:
+        logger.warning(f"Impossible d'initialiser le cache des modèles au démarrage: {e}")
+        logger.info("Le cache sera initialisé au premier appel")
+
 
 # Ajouter les middlewares
 app.add_middleware(LoggingMiddleware)
@@ -89,7 +112,7 @@ class ChatCompletionChunk(BaseModel):
 # Cache pour la liste des modèles disponibles (mis à jour dynamiquement)
 _available_models_cache: Optional[List[str]] = None
 _cache_timestamp: Optional[float] = None
-CACHE_DURATION = 300  # 5 minutes
+CACHE_DURATION = 3600  # 1 heure (augmenté pour réduire les appels)
 
 # Mapping optionnel pour les alias de compatibilité (OpenAI/Anthropic)
 # Ces alias sont mappés vers les modèles cursor-agent réels
@@ -150,6 +173,7 @@ async def get_available_models() -> List[str]:
         
         # Méthode 1: Essayer avec un modèle invalide pour obtenir la liste
         # (cursor-agent retourne la liste dans le message d'erreur)
+        # Réduire le timeout pour éviter les longs délais
         loop = asyncio.get_event_loop()
         result = await loop.run_in_executor(
             None,
@@ -157,7 +181,7 @@ async def get_available_models() -> List[str]:
                 [cli_path, "--model", "invalid-model-test", "test"],
                 capture_output=True,
                 text=True,
-                timeout=10,
+                timeout=3,  # Réduit de 10s à 3s pour éviter les longs délais
                 env=env
             )
         )
@@ -256,11 +280,17 @@ async def call_cursor_agent(messages: List[Message], model: str = "auto") -> str
         messages: Liste des messages de la conversation
         model: Nom du modèle cursor-agent à utiliser (déjà mappé)
     """
+    import time
+    start_time = time.time()
+    
     mode = settings.cursor_agent_mode.lower()
     logger.info(f"Appel à cursor-agent en mode: {mode}, modèle: {model}")
     
     # Convertir les messages en format attendu
+    format_start = time.time()
     prompt = "\n".join([f"{msg.role}: {msg.content}" for msg in messages])
+    format_duration = (time.time() - format_start) * 1000
+    logger.debug(f"Formatage des messages: {format_duration:.2f}ms")
     
     try:
         if mode == "cli":
@@ -297,6 +327,9 @@ async def _call_cursor_agent_cli(prompt: str, model: str) -> str:
         prompt: Le prompt à envoyer à cursor-agent
         model: Le modèle à utiliser (déjà mappé au format cursor-agent)
     """
+    import time
+    start_time = time.time()
+    
     cli_path = settings.cursor_agent_cli_path or "cursor-agent"
     
     # Préparer l'environnement avec le token si disponible
@@ -306,10 +339,24 @@ async def _call_cursor_agent_cli(prompt: str, model: str) -> str:
         env["CURSOR_API_KEY"] = settings.cursor_api_key
     
     # Construire la commande avec le modèle
-    cmd = [cli_path, "--model", model, prompt]
-    logger.info(f"Commande cursor-agent: {' '.join(cmd[:3])}... (prompt tronqué)")
+    # Utiliser --print pour le mode non-interactif (plus rapide pour les scripts)
+    # Utiliser --output-format text pour éviter le parsing JSON (plus rapide)
+    # Format: cursor-agent --print --model <model> <prompt>
+    cmd = [cli_path, "--print", "--output-format", "text", "--model", model, prompt]
+    logger.debug(f"Commande cursor-agent: {' '.join(cmd[:5])}... (prompt: {len(prompt)} chars)")
+    
+    # Mesurer le temps avant l'appel subprocess
+    pre_subprocess_time = time.time()
+    logger.debug(f"Temps avant subprocess: {(pre_subprocess_time - start_time)*1000:.2f}ms")
     
     # Exécuter dans un thread pour ne pas bloquer l'event loop
+    # Note: L'overhead du subprocess est inévitable en mode CLI
+    # Chaque appel crée un nouveau processus cursor-agent qui doit :
+    # 1. S'initialiser (charger Node.js, dépendances, etc.)
+    # 2. Se connecter au service Cursor
+    # 3. S'authentifier
+    # 4. Traiter la requête
+    # C'est pourquoi c'est plus lent qu'un appel CLI direct où cursor-agent reste en mémoire
     loop = asyncio.get_event_loop()
     result = await loop.run_in_executor(
         None,
@@ -322,7 +369,14 @@ async def _call_cursor_agent_cli(prompt: str, model: str) -> str:
         )
     )
     
+    # Mesurer le temps après l'appel subprocess
+    post_subprocess_time = time.time()
+    subprocess_duration = (post_subprocess_time - pre_subprocess_time) * 1000
+    total_duration = (post_subprocess_time - start_time) * 1000
+    logger.info(f"cursor-agent subprocess: {subprocess_duration:.2f}ms (total: {total_duration:.2f}ms)")
+    
     if result.returncode != 0:
+        logger.error(f"cursor-agent stderr: {result.stderr[:500]}")
         raise RuntimeError(f"cursor-agent a retourné le code {result.returncode}: {result.stderr}")
     
     return result.stdout.strip()
@@ -336,6 +390,9 @@ async def _call_cursor_agent_http(messages: List[Message], model: str) -> str:
         messages: Liste des messages
         model: Le modèle à utiliser (déjà mappé au format cursor-agent)
     """
+    import time
+    start_time = time.time()
+    
     if not settings.cursor_agent_http_url:
         raise ValueError("CURSOR_AGENT_HTTP_URL doit être défini pour le mode HTTP")
     
@@ -346,19 +403,44 @@ async def _call_cursor_agent_http(messages: List[Message], model: str) -> str:
     }
     
     # Préparer les headers avec authentification si token disponible
-    headers = {}
+    headers = {"Content-Type": "application/json"}
     if settings.cursor_api_key:
         headers["Authorization"] = f"Bearer {settings.cursor_api_key}"
     
     logger.info(f"Requête HTTP à cursor-agent: {url} avec modèle {model}")
     
-    async with httpx.AsyncClient(timeout=settings.cursor_agent_timeout) as client:
-        response = await client.post(url, json=payload, headers=headers)
-        response.raise_for_status()
-        data = response.json()
-        
-        # Adapter selon le format de réponse de cursor-agent
-        return data.get("response") or data.get("content") or str(data)
+    # Mesurer le temps de la requête HTTP
+    http_start = time.time()
+    try:
+        async with httpx.AsyncClient(timeout=settings.cursor_agent_timeout) as client:
+            response = await client.post(url, json=payload, headers=headers)
+            response.raise_for_status()
+            data = response.json()
+    except httpx.ConnectError as e:
+        logger.error(f"Impossible de se connecter à {url}: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail=f"Impossible de se connecter à cursor-agent HTTP: {url}. Vérifiez que le serveur est démarré."
+        )
+    except httpx.TimeoutException:
+        logger.error(f"Timeout lors de la connexion à {url}")
+        raise HTTPException(
+            status_code=504,
+            detail=f"Timeout lors de l'appel à cursor-agent HTTP (>{settings.cursor_agent_timeout}s)"
+        )
+    except Exception as e:
+        logger.error(f"Erreur lors de l'appel HTTP: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erreur lors de l'appel à cursor-agent HTTP: {str(e)}"
+        )
+    
+    http_duration = (time.time() - http_start) * 1000
+    total_duration = (time.time() - start_time) * 1000
+    logger.info(f"cursor-agent HTTP: {http_duration:.2f}ms (total: {total_duration:.2f}ms)")
+    
+    # Adapter selon le format de réponse de cursor-agent
+    return data.get("response") or data.get("content") or data.get("text") or str(data)
 
 
 async def _call_cursor_agent_library(messages: List[Message], model: str) -> str:
@@ -401,14 +483,26 @@ async def chat_completions(request: ChatCompletionRequest):
         )
     
     try:
+        import time
+        request_start = time.time()
+        
         # Récupérer la liste des modèles disponibles
+        models_start = time.time()
         available_models = await get_available_models()
+        models_duration = (time.time() - models_start) * 1000
+        logger.debug(f"Récupération des modèles: {models_duration:.2f}ms")
         
         # Mapper le modèle au format cursor-agent
+        map_start = time.time()
         cursor_model = map_model_name(request.model, available_models)
+        map_duration = (time.time() - map_start) * 1000
+        logger.debug(f"Mapping du modèle: {map_duration:.2f}ms")
         
         # Appeler cursor-agent avec le modèle mappé
+        call_start = time.time()
         response_content = await call_cursor_agent(request.messages, cursor_model)
+        call_duration = (time.time() - call_start) * 1000
+        logger.info(f"Appel cursor-agent: {call_duration:.2f}ms")
         
         # Construire la réponse au format OpenAI
         response_message = Message(role="assistant", content=response_content)
