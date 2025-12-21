@@ -28,7 +28,7 @@ ENV/
 
 # uv
 .uv/
-uv.lock
+# uv.lock - doit être versionné pour la reproductibilité des builds
 
 # IDE
 .vscode/

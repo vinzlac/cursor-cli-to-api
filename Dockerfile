@@ -26,10 +26,14 @@ WORKDIR /app
 # Copier les fichiers de configuration
 COPY pyproject.toml ./
 COPY .python-version ./
-COPY uv.lock ./
 COPY README.md ./
 
+# Copier uv.lock s'il existe (recommandé pour la reproductibilité)
+# Note: Le fichier doit être commité dans git pour être disponible lors du build
+COPY uv.lock ./
+
 # Installer les dépendances avec uv
+# --frozen garantit l'utilisation exacte des versions spécifiées dans uv.lock
 RUN uv sync --frozen --no-dev
 
 # Copier le code source
