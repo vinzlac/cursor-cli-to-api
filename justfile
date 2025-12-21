@@ -223,6 +223,16 @@ docker-build:
     @echo "🐳 Construction de l'image Docker..."
     docker build -t cursor-openai-proxy:latest .
 
+# Rebuild l'image Docker et redémarre le conteneur (avec docker-compose)
+docker-rebuild:
+    @echo "🐳 Rebuild et redémarrage du conteneur Docker (docker-compose)..."
+    @./scripts/docker-rebuild.sh
+
+# Rebuild l'image Docker et redémarre le conteneur (Docker simple, sans docker-compose)
+docker-rebuild-simple:
+    @echo "🐳 Rebuild et redémarrage du conteneur Docker (Docker simple)..."
+    @./scripts/docker-rebuild-simple.sh
+
 # Build l'image Docker avec tag basé sur la version de cursor-agent et le hash git
 docker-build-tagged:
     @echo "🐳 Construction de l'image Docker avec tag personnalisé..."

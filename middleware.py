@@ -59,8 +59,8 @@ class AuthMiddleware(BaseHTTPMiddleware):
     """Middleware pour l'authentification par API key"""
     
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        # Ignorer les endpoints de santé et de documentation
-        if request.url.path in ["/health", "/docs", "/redoc", "/openapi.json"]:
+        # Ignorer les endpoints de santé, de documentation et de debug
+        if request.url.path in ["/health", "/docs", "/redoc", "/openapi.json", "/debug/models"]:
             return await call_next(request)
         
         # Si aucune API key n'est configurée, passer

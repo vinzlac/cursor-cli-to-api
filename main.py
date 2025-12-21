@@ -163,17 +163,18 @@ async def get_available_models() -> List[str]:
             return _available_models_cache
     
     # Récupérer la liste depuis cursor-agent
+    cli_path = settings.cursor_agent_cli_path or "cursor-agent"
+    env = os.environ.copy()
+    if settings.cursor_api_key:
+        env["CURSOR_API_KEY"] = settings.cursor_api_key
+        logger.debug("CURSOR_API_KEY configurée pour la détection des modèles")
+    else:
+        logger.warning("CURSOR_API_KEY non configurée - la détection des modèles peut échouer")
+    
+    # Méthode 1: Essayer avec un modèle invalide pour obtenir la liste
+    # (cursor-agent retourne la liste dans le message d'erreur)
     try:
-        # Essayer d'obtenir la liste via une commande cursor-agent
-        # Si cursor-agent ne supporte pas --list-models, on utilise une méthode de fallback
-        cli_path = settings.cursor_agent_cli_path or "cursor-agent"
-        env = os.environ.copy()
-        if settings.cursor_api_key:
-            env["CURSOR_API_KEY"] = settings.cursor_api_key
-        
-        # Méthode 1: Essayer avec un modèle invalide pour obtenir la liste
-        # (cursor-agent retourne la liste dans le message d'erreur)
-        # Réduire le timeout pour éviter les longs délais
+        logger.info(f"Tentative de détection des modèles avec cursor-agent (timeout: 15s)...")
         loop = asyncio.get_event_loop()
         result = await loop.run_in_executor(
             None,
@@ -181,7 +182,7 @@ async def get_available_models() -> List[str]:
                 [cli_path, "--model", "invalid-model-test", "test"],
                 capture_output=True,
                 text=True,
-                timeout=3,  # Réduit de 10s à 3s pour éviter les longs délais
+                timeout=15,  # Augmenté à 15s pour Coolify (peut être plus lent)
                 env=env
             )
         )
@@ -190,34 +191,90 @@ async def get_available_models() -> List[str]:
         # Le message peut être dans stderr ou stdout
         error_msg = result.stderr or result.stdout or ""
         
-        if result.returncode != 0 and "Available models:" in error_msg:
-            # Extraire la liste des modèles depuis le message d'erreur
-            # Format: "Available models: composer-1, auto, sonnet-4.5, ..."
+        # Logs détaillés pour le diagnostic
+        logger.debug(f"cursor-agent return code: {result.returncode}")
+        logger.debug(f"cursor-agent stderr (premiers 500 chars): {error_msg[:500]}")
+        
+        # Chercher différents formats de messages d'erreur
+        models = None
+        
+        # Format 1: "Available models: composer-1, auto, sonnet-4.5, ..."
+        if "Available models:" in error_msg:
             models_line = error_msg.split("Available models:")[1].strip()
-            # Prendre seulement la première ligne (avant \n si présent)
             models_line = models_line.split("\n")[0].strip()
-            # Parser: "composer-1, auto, sonnet-4.5, ..."
             models = [m.strip() for m in models_line.split(",") if m.strip()]
-            if models:
-                _available_models_cache = models
-                _cache_timestamp = current_time
-                logger.info(f"Modèles disponibles détectés: {models}")
-                return models
+            logger.info(f"Modèles détectés via 'Available models:' : {models}")
         
-        # Méthode 2: Fallback - utiliser une liste par défaut si la détection échoue
-        logger.warning("Impossible de détecter les modèles, utilisation de la liste par défaut")
-        default_models = ["auto", "composer-1"]
-        _available_models_cache = default_models
-        _cache_timestamp = current_time
-        return default_models
+        # Format 2: Chercher dans différentes variantes du message
+        if not models:
+            # Chercher des patterns comme "models: ..." ou "supported models: ..."
+            for pattern in ["models:", "Models:", "supported models:", "Supported models:"]:
+                if pattern in error_msg:
+                    # Extraire la ligne contenant les modèles
+                    for line in error_msg.split("\n"):
+                        if pattern in line:
+                            # Extraire après le pattern
+                            parts = line.split(pattern, 1)
+                            if len(parts) > 1:
+                                models_line = parts[1].strip()
+                                models = [m.strip() for m in models_line.split(",") if m.strip()]
+                                if models:
+                                    logger.info(f"Modèles détectés via '{pattern}': {models}")
+                                    break
+                    if models:
+                        break
         
+        # Format 3: Chercher des noms de modèles connus dans le message d'erreur
+        if not models:
+            known_models = ["gpt-5.2", "gpt-5.1", "sonnet-4.5", "opus-4.5", "composer-1", "auto", "gemini-3-pro"]
+            found_models = []
+            for model in known_models:
+                if model in error_msg:
+                    found_models.append(model)
+            if found_models:
+                # Ajouter toujours auto et composer-1
+                models = list(set(found_models + ["auto", "composer-1"]))
+                logger.info(f"Modèles détectés via recherche de patterns: {models}")
+        
+        if models and len(models) > 0:
+            _available_models_cache = models
+            _cache_timestamp = current_time
+            logger.info(f"✅ {len(models)} modèles disponibles détectés: {models[:5]}{'...' if len(models) > 5 else ''}")
+            return models
+        
+        # Si aucun modèle détecté, logger le message complet pour diagnostic
+        logger.warning(f"Impossible de détecter les modèles depuis cursor-agent")
+        logger.warning(f"Message complet stderr: {error_msg[:1000]}")
+        logger.warning(f"Message complet stdout: {result.stdout[:1000] if result.stdout else 'Vide'}")
+        
+    except subprocess.TimeoutExpired:
+        logger.error("Timeout (15s) lors de la détection des modèles - cursor-agent est trop lent ou bloqué")
+        logger.error("Vérifiez que CURSOR_API_KEY est correcte et que cursor-agent peut se connecter")
+    except FileNotFoundError:
+        logger.error(f"cursor-agent non trouvé à: {cli_path}")
+        logger.error("Vérifiez que cursor-agent est installé et dans le PATH")
     except Exception as e:
-        logger.error(f"Erreur lors de la récupération des modèles: {e}")
-        # Fallback vers une liste minimale
-        default_models = ["auto", "composer-1"]
-        _available_models_cache = default_models
-        _cache_timestamp = current_time
-        return default_models
+        logger.error(f"Erreur lors de la récupération des modèles: {e}", exc_info=True)
+    
+    # Fallback: utiliser une liste étendue par défaut si la détection échoue
+    # Cette liste inclut les modèles les plus courants pour éviter de retourner seulement 2 modèles
+    logger.warning("Utilisation de la liste de fallback étendue (détection échouée)")
+    default_models = [
+        "auto", "composer-1",
+        # Modèles GPT
+        "gpt-5.2", "gpt-5.1", "gpt-5.2-high", "gpt-5.1-high",
+        "gpt-5.1-codex", "gpt-5.1-codex-high", "gpt-5.1-codex-max", "gpt-5.1-codex-max-high",
+        # Modèles Anthropic
+        "sonnet-4.5", "sonnet-4.5-thinking", "opus-4.5", "opus-4.5-thinking", "opus-4.1",
+        # Modèles Google
+        "gemini-3-pro", "gemini-3-flash",
+        # Autres
+        "grok"
+    ]
+    _available_models_cache = default_models
+    _cache_timestamp = current_time
+    logger.info(f"Liste de fallback utilisée: {len(default_models)} modèles")
+    return default_models
 
 
 def map_model_name(model: str, available_models: List[str]) -> str:
@@ -337,18 +394,23 @@ async def _call_cursor_agent_cli(prompt: str, model: str) -> str:
     if settings.cursor_api_key:
         # cursor-agent attend CURSOR_API_KEY
         env["CURSOR_API_KEY"] = settings.cursor_api_key
+        logger.debug(f"CURSOR_API_KEY configurée (longueur: {len(settings.cursor_api_key)})")
+    else:
+        logger.warning("⚠️  CURSOR_API_KEY non configurée - cursor-agent peut échouer ou être très lent")
     
     # Construire la commande avec le modèle
     # Utiliser --print pour le mode non-interactif (plus rapide pour les scripts)
     # Note: --output-format text ralentit cursor-agent dans Docker, donc on ne l'utilise pas
     # Format: cursor-agent --print --model <model> <prompt>
     cmd = [cli_path, "--print", "--model", model, prompt]
-    logger.info(f"Commande cursor-agent: {' '.join(cmd[:5])}... (prompt: {len(prompt)} chars)")
-    logger.debug(f"Prompt complet: {prompt[:200]}...")
+    logger.info(f"🚀 Démarrage appel cursor-agent - modèle: {model}, prompt: {len(prompt)} chars")
+    logger.debug(f"Commande: {' '.join(cmd[:5])}...")
+    logger.debug(f"Prompt (premiers 200 chars): {prompt[:200]}...")
     
     # Mesurer le temps avant l'appel subprocess
     pre_subprocess_time = time.time()
-    logger.debug(f"Temps avant subprocess: {(pre_subprocess_time - start_time)*1000:.2f}ms")
+    prep_duration = (pre_subprocess_time - start_time) * 1000
+    logger.debug(f"⏱️  Préparation: {prep_duration:.2f}ms")
     
     # Exécuter dans un thread pour ne pas bloquer l'event loop
     # Note: L'overhead du subprocess est inévitable en mode CLI
@@ -376,20 +438,26 @@ async def _call_cursor_agent_cli(prompt: str, model: str) -> str:
             logger.error(f"Erreur subprocess: {e}")
             raise
     
+    logger.info(f"⏳ Exécution de cursor-agent (timeout: {settings.cursor_agent_timeout}s)...")
     result = await loop.run_in_executor(None, run_subprocess)
     
     # Mesurer le temps après l'appel subprocess
     post_subprocess_time = time.time()
-    subprocess_duration = (post_subprocess_time - pre_subprocess_time) * 1000
-    total_duration = (post_subprocess_time - start_time) * 1000
-    logger.info(f"cursor-agent subprocess: {subprocess_duration:.2f}ms (total: {total_duration:.2f}ms)")
+    subprocess_duration = (post_subprocess_time - pre_subprocess_time) / 1.0  # en secondes
+    total_duration = (post_subprocess_time - start_time) / 1.0  # en secondes
+    
+    # Logger avec des unités appropriées
+    if subprocess_duration < 1:
+        logger.info(f"✅ cursor-agent terminé: {subprocess_duration*1000:.0f}ms (total: {total_duration*1000:.0f}ms)")
+    else:
+        logger.info(f"✅ cursor-agent terminé: {subprocess_duration:.1f}s (total: {total_duration:.1f}s)")
     
     # Logs détaillés pour le débogage
     logger.debug(f"Return code: {result.returncode}")
     if result.stdout:
-        logger.debug(f"Stdout (premiers 200 chars): {result.stdout[:200]}")
+        logger.debug(f"Stdout (premiers 300 chars): {result.stdout[:300]}")
     if result.stderr:
-        logger.debug(f"Stderr (premiers 200 chars): {result.stderr[:200]}")
+        logger.debug(f"Stderr (premiers 300 chars): {result.stderr[:300]}")
     
     if result.returncode != 0:
         error_msg = result.stderr[:500] if result.stderr else "Pas de message d'erreur"
@@ -619,6 +687,98 @@ async def chat_completions_stream(request: ChatCompletionRequest):
 async def health():
     """Endpoint de santé"""
     return {"status": "ok", "service": "cursor-agent-proxy"}
+
+
+@app.get("/debug/models")
+async def debug_models():
+    """
+    Endpoint de debug pour diagnostiquer la détection des modèles.
+    Retourne des informations détaillées sur la détection des modèles.
+    """
+    import subprocess
+    import time
+    
+    debug_info = {
+        "timestamp": datetime.now().isoformat(),
+        "cached_models": _available_models_cache,
+        "cache_age_seconds": None,
+        "cursor_agent_path": settings.cursor_agent_cli_path or "cursor-agent",
+        "cursor_api_key_configured": bool(settings.cursor_api_key),
+        "cursor_api_key_length": len(settings.cursor_api_key) if settings.cursor_api_key else 0,
+        "test_results": {}
+    }
+    
+    # Calculer l'âge du cache
+    if _cache_timestamp:
+        debug_info["cache_age_seconds"] = int(datetime.now().timestamp() - _cache_timestamp)
+    
+    # Tester cursor-agent directement
+    cli_path = settings.cursor_agent_cli_path or "cursor-agent"
+    env = os.environ.copy()
+    if settings.cursor_api_key:
+        env["CURSOR_API_KEY"] = settings.cursor_api_key
+    
+    # Test 1: Vérifier que cursor-agent est accessible
+    try:
+        result = subprocess.run(
+            [cli_path, "--version"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            env=env
+        )
+        debug_info["test_results"]["version_check"] = {
+            "success": result.returncode == 0,
+            "returncode": result.returncode,
+            "stdout": result.stdout[:200] if result.stdout else "",
+            "stderr": result.stderr[:200] if result.stderr else ""
+        }
+    except Exception as e:
+        debug_info["test_results"]["version_check"] = {
+            "success": False,
+            "error": str(e)
+        }
+    
+    # Test 2: Tester la détection des modèles
+    try:
+        start_time = time.time()
+        result = subprocess.run(
+            [cli_path, "--model", "invalid-model-test", "test"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            env=env
+        )
+        duration = time.time() - start_time
+        
+        debug_info["test_results"]["model_detection"] = {
+            "success": result.returncode != 0,  # On attend un code d'erreur
+            "duration_seconds": round(duration, 2),
+            "returncode": result.returncode,
+            "stdout": result.stdout[:500] if result.stdout else "",
+            "stderr": result.stderr[:500] if result.stderr else "",
+            "models_found": []
+        }
+        
+        # Essayer d'extraire les modèles
+        error_msg = result.stderr or result.stdout or ""
+        if "Available models:" in error_msg:
+            models_line = error_msg.split("Available models:")[1].strip().split("\n")[0]
+            models = [m.strip() for m in models_line.split(",") if m.strip()]
+            debug_info["test_results"]["model_detection"]["models_found"] = models
+        
+    except subprocess.TimeoutExpired:
+        debug_info["test_results"]["model_detection"] = {
+            "success": False,
+            "error": "Timeout après 15 secondes"
+        }
+    except Exception as e:
+        debug_info["test_results"]["model_detection"] = {
+            "success": False,
+            "error": str(e)
+        }
+    
+    return debug_info
 
 
 @app.get("/v1/models")
