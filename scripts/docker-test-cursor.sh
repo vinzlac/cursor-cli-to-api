@@ -53,19 +53,40 @@ echo ""
 # Test 3: Test simple avec timeout court
 echo "Test 3: Test simple cursor-agent (timeout 30s)"
 echo "-----------------------------------------------"
-echo "Commande: cursor-agent --print --model auto 'user: test'"
+echo "Note: Le modèle 'auto' peut être plus lent avec des prompts très courts."
+echo "      Avec un prompt réaliste, 'auto' prend ~4-5s (comme via l'API)."
+echo "      Pour des tests plus rapides, utilisez un modèle spécifique (ex: gpt-5.2)."
 echo ""
+echo "Commande: cursor-agent --print --model auto 'user: Bonjour, comment ça va ?'"
+echo ""
+
+# Récupérer CURSOR_API_KEY depuis le conteneur pour la passer explicitement
+CONTAINER_API_KEY=$(docker exec "$CONTAINER_NAME" printenv CURSOR_API_KEY 2>/dev/null || echo "")
 
 START=$(date +%s)
 TIMEOUT=30
 
-OUTPUT=$(docker exec "$CONTAINER_NAME" timeout $TIMEOUT cursor-agent --print --model auto "user: test" 2>&1)
+# Utiliser un prompt plus réaliste (comme dans l'API) pour avoir des temps comparables
+# Les prompts très courts peuvent déclencher un comportement différent avec 'auto'
+TEST_PROMPT="user: Bonjour, comment ça va ?"
+
+# Passer CURSOR_API_KEY explicitement dans l'environnement
+# docker exec n'hérite pas automatiquement des variables d'environnement du conteneur
+if [ -n "$CONTAINER_API_KEY" ]; then
+    echo "   Utilisation de CURSOR_API_KEY du conteneur..."
+    OUTPUT=$(docker exec -e CURSOR_API_KEY="$CONTAINER_API_KEY" "$CONTAINER_NAME" timeout $TIMEOUT cursor-agent --print --model auto "$TEST_PROMPT" 2>&1)
+else
+    echo "   ⚠️  CURSOR_API_KEY non trouvée, test sans authentification..."
+    OUTPUT=$(docker exec "$CONTAINER_NAME" timeout $TIMEOUT cursor-agent --print --model auto "$TEST_PROMPT" 2>&1)
+fi
+
 EXIT_CODE=$?
 END=$(date +%s)
 DURATION=$((END - START))
 
 if [ $EXIT_CODE -eq 124 ]; then
     echo "❌ TIMEOUT après ${TIMEOUT}s"
+    echo "   Temps écoulé: ${DURATION}s"
     echo "   cursor-agent ne répond pas dans le conteneur"
     echo ""
     echo "💡 Solutions possibles:"
@@ -76,6 +97,7 @@ if [ $EXIT_CODE -eq 124 ]; then
     exit 1
 elif [ $EXIT_CODE -ne 0 ]; then
     echo "❌ ERREUR (code: $EXIT_CODE)"
+    echo "   Temps écoulé: ${DURATION}s"
     echo "   Sortie:"
     echo "$OUTPUT" | head -20
     echo ""
@@ -87,6 +109,7 @@ elif [ $EXIT_CODE -ne 0 ]; then
     exit 1
 elif [ -z "$OUTPUT" ]; then
     echo "⚠️  cursor-agent a réussi (code: 0) mais aucune sortie"
+    echo "   Temps écoulé: ${DURATION}s"
     echo "   Cela peut indiquer un problème de configuration"
     echo ""
     echo "💡 Testez manuellement:"
@@ -94,18 +117,33 @@ elif [ -z "$OUTPUT" ]; then
     exit 1
 fi
 
-END=$(date +%s)
-DURATION=$((END - START))
-
 echo "✅ SUCCÈS !"
-echo "   Temps: ${DURATION}s"
+echo "   Temps d'exécution: ${DURATION}s"
 echo "   Réponse:"
 echo "$OUTPUT" | head -5
 echo ""
 
 echo "================================="
 echo "✅ cursor-agent fonctionne dans Docker"
-echo "   Si l'API timeout, vérifiez:"
+echo ""
+echo "📊 Résultats du test:"
+echo "   - Modèle testé: auto (sélection automatique)"
+echo "   - Temps d'exécution: ${DURATION}s"
+if (( $(echo "$DURATION < 10" | bc -l) )); then
+    echo "   - Performance: ✅ Excellente (< 10s)"
+elif (( $(echo "$DURATION < 20" | bc -l) )); then
+    echo "   - Performance: ✅ Bonne (< 20s)"
+else
+    echo "   - Performance: ⚠️  Lente (> 20s) - Normal pour 'auto'"
+fi
+echo ""
+echo "💡 Note importante:"
+echo "   - Le modèle 'auto' avec un prompt réaliste prend ~4-5s (identique à l'API)"
+echo "   - Avec des prompts très courts, 'auto' peut être plus lent (~20-25s)"
+echo "   - Les modèles spécifiques (gpt-5.2, gpt-5.1, etc.) sont généralement plus rapides (~4-5s)"
+echo "   - La performance dépend du prompt : prompts réalistes = meilleure performance avec 'auto'"
+echo ""
+echo "💡 Si l'API timeout, vérifiez:"
 echo "   - Les logs: docker logs -f $CONTAINER_NAME"
 echo "   - Le timeout: CURSOR_AGENT_TIMEOUT dans .env"
 

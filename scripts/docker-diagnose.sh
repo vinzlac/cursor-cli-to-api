@@ -61,18 +61,42 @@ echo "------------------------------------"
 echo "Exécution: cursor-agent --print --model auto 'user: test'"
 echo ""
 
+# Récupérer CURSOR_API_KEY depuis le conteneur
+CONTAINER_API_KEY=$(docker exec "$CONTAINER_NAME" printenv CURSOR_API_KEY 2>/dev/null || echo "")
+
 START=$(date +%s)
 TIMEOUT=30
-docker exec "$CONTAINER_NAME" timeout $TIMEOUT cursor-agent --print --model auto "user: test" 2>&1 | head -10 || {
-    END=$(date +%s)
-    DURATION=$((END - START))
-    if [ $DURATION -ge $TIMEOUT ]; then
-        echo "❌ Timeout après ${TIMEOUT}s"
-        echo "   cursor-agent ne répond pas dans le conteneur"
+
+# Passer CURSOR_API_KEY explicitement
+# docker exec n'hérite pas automatiquement des variables d'environnement du conteneur
+if [ -n "$CONTAINER_API_KEY" ]; then
+    if docker exec -e CURSOR_API_KEY="$CONTAINER_API_KEY" "$CONTAINER_NAME" timeout $TIMEOUT cursor-agent --print --model auto "user: test" 2>&1 | head -10; then
+        echo "✅ cursor-agent répond correctement"
     else
-        echo "❌ Erreur lors de l'exécution"
+        EXIT_CODE=$?
+        END=$(date +%s)
+        DURATION=$((END - START))
+        if [ $EXIT_CODE -eq 124 ]; then
+            echo "❌ TIMEOUT après ${TIMEOUT}s"
+        else
+            echo "❌ ERREUR (code: $EXIT_CODE)"
+        fi
     fi
-}
+else
+    if docker exec "$CONTAINER_NAME" timeout $TIMEOUT cursor-agent --print --model auto "user: test" 2>&1 | head -10; then
+        echo "✅ cursor-agent répond correctement"
+    else
+        EXIT_CODE=$?
+        END=$(date +%s)
+        DURATION=$((END - START))
+        if [ $EXIT_CODE -eq 124 ]; then
+            echo "❌ TIMEOUT après ${TIMEOUT}s"
+        else
+            echo "❌ ERREUR (code: $EXIT_CODE)"
+        fi
+    fi
+fi
+
 END=$(date +%s)
 DURATION=$((END - START))
 echo ""
