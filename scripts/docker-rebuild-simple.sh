@@ -104,16 +104,20 @@ echo ""
 # Étape 3: Charger les variables d'environnement depuis .env
 echo -e "${BLUE}3️⃣  Chargement des variables d'environnement...${NC}"
 if [ -f .env ]; then
-    export $(grep -v '^#' .env | grep -v '^$' | xargs)
+    # Charger les variables principales depuis .env
+    export CURSOR_API_KEY=$(grep "^CURSOR_API_KEY=" .env | cut -d= -f2- | tr -d '"' | tr -d "'" || echo "")
+    export API_KEY=$(grep "^API_KEY=" .env | cut -d= -f2- | tr -d '"' | tr -d "'" || echo "")
+    export CURSOR_AGENT_MODE=$(grep "^CURSOR_AGENT_MODE=" .env | cut -d= -f2- | tr -d '"' | tr -d "'" || echo "cli")
+    export CURSOR_AGENT_TIMEOUT=$(grep "^CURSOR_AGENT_TIMEOUT=" .env | cut -d= -f2- | tr -d '"' | tr -d "'" || echo "120")
+    export LOG_LEVEL=$(grep "^LOG_LEVEL=" .env | cut -d= -f2- | tr -d '"' | tr -d "'" || echo "INFO")
     echo -e "${GREEN}   ✅ Variables d'environnement chargées${NC}"
 else
     echo -e "${YELLOW}   ⚠️  Fichier .env non trouvé, utilisation des valeurs par défaut${NC}"
+    # Valeurs par défaut
+    CURSOR_AGENT_MODE=${CURSOR_AGENT_MODE:-cli}
+    CURSOR_AGENT_TIMEOUT=${CURSOR_AGENT_TIMEOUT:-120}
+    LOG_LEVEL=${LOG_LEVEL:-INFO}
 fi
-
-# Valeurs par défaut
-CURSOR_AGENT_MODE=${CURSOR_AGENT_MODE:-cli}
-CURSOR_AGENT_TIMEOUT=${CURSOR_AGENT_TIMEOUT:-120}
-LOG_LEVEL=${LOG_LEVEL:-INFO}
 
 echo ""
 

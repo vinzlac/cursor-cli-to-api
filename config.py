@@ -25,7 +25,8 @@ class Settings(BaseSettings):
     cursor_agent_mode: str = "cli"  # "cli", "http", "library"
     cursor_agent_cli_path: Optional[str] = None  # Chemin vers l'exécutable CLI
     cursor_agent_http_url: Optional[str] = None  # URL de l'API HTTP si mode=http
-    cursor_agent_timeout: int = 60  # Timeout en secondes
+    # Timeout augmenté à 120s par défaut pour Docker (cursor-agent est plus lent dans Docker)
+    cursor_agent_timeout: int = 120  # Timeout en secondes (60s en local, 120s recommandé pour Docker)
     cursor_api_key: Optional[str] = None  # Token d'authentification pour cursor-agent (CURSOR_API_KEY)
     
     # API
@@ -37,7 +38,7 @@ class Settings(BaseSettings):
     api_key: Optional[str] = None  # Pour l'authentification
     
     # Logging
-    log_level: str = "INFO"
+    log_level: str = "INFO"  # "DEBUG", "INFO", "WARNING", "ERROR"
 
 
 # Instance globale des settings
