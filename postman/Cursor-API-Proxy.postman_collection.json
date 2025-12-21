@@ -1,0 +1,487 @@
+{
+	"info": {
+		"_postman_id": "cursor-api-proxy-collection",
+		"name": "Cursor API Proxy",
+		"description": "Collection Postman pour tester l'API cursor-openai-proxy compatible OpenAI",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/health",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"health"
+					]
+				},
+				"description": "Vérifie que le serveur est accessible et fonctionne"
+			},
+			"response": []
+		},
+		{
+			"name": "List Models",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{api_key}}",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/v1/models",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"v1",
+						"models"
+					]
+				},
+				"description": "Liste tous les modèles disponibles (compatible OpenAI)"
+			},
+			"response": []
+		},
+		{
+			"name": "Chat Completions",
+			"item": [
+				{
+					"name": "Simple Chat (auto model)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{api_key}}",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"model\": \"auto\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Bonjour, comment ça va ?\"\n    }\n  ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/chat/completions",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"chat",
+								"completions"
+							]
+						},
+						"description": "Chat simple avec le modèle auto (sélection automatique)"
+					},
+					"response": []
+				},
+				{
+					"name": "Chat with System Message",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{api_key}}",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"model\": \"gpt-5\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Tu es un assistant Python expert.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Explique-moi ce qu'est FastAPI en 2 phrases.\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 200\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/chat/completions",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"chat",
+								"completions"
+							]
+						},
+						"description": "Chat avec message système et paramètres de température"
+					},
+					"response": []
+				},
+				{
+					"name": "Chat with GPT-4o alias",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{api_key}}",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"model\": \"gpt-4o\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Qu'est-ce que l'intelligence artificielle ?\"\n    }\n  ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/chat/completions",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"chat",
+								"completions"
+							]
+						},
+						"description": "Utilise l'alias GPT-4o (mappé vers gpt-5)"
+					},
+					"response": []
+				},
+				{
+					"name": "Chat with Claude Sonnet",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{api_key}}",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"model\": \"claude-3-5-sonnet-20241022\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Raconte-moi une courte histoire sur Python.\"\n    }\n  ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/chat/completions",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"chat",
+								"completions"
+							]
+						},
+						"description": "Utilise Claude Sonnet via l'alias Anthropic"
+					},
+					"response": []
+				},
+				{
+					"name": "Multi-turn Conversation",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{api_key}}",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"model\": \"default\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Tu es un assistant de code.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Comment créer une fonction Python ?\"\n    },\n    {\n      \"role\": \"assistant\",\n      \"content\": \"Pour créer une fonction Python, utilisez le mot-clé 'def' suivi du nom de la fonction et des paramètres entre parenthèses.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Peux-tu donner un exemple ?\"\n    }\n  ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/chat/completions",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"chat",
+								"completions"
+							]
+						},
+						"description": "Conversation multi-tours avec historique"
+					},
+					"response": []
+				},
+				{
+					"name": "Chat with All Parameters",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{api_key}}",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"model\": \"gpt-5\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Explique-moi FastAPI\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 500,\n  \"top_p\": 1.0,\n  \"frequency_penalty\": 0.0,\n  \"presence_penalty\": 0.0\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/chat/completions",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"chat",
+								"completions"
+							]
+						},
+						"description": "Chat avec tous les paramètres disponibles"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints pour les chat completions"
+		},
+		{
+			"name": "Streaming",
+			"item": [
+				{
+					"name": "Chat Completions Stream",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{api_key}}",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"model\": \"auto\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Raconte-moi une histoire courte\"\n    }\n  ],\n  \"stream\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/chat/completions-stream",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"chat",
+								"completions-stream"
+							]
+						},
+						"description": "Chat avec streaming (Server-Sent Events)"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints pour le streaming"
+		},
+		{
+			"name": "Authentication Tests",
+			"item": [
+				{
+					"name": "Test with Valid API Key",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{api_key}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"model\": \"auto\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Test\"\n    }\n  ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/chat/completions",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"chat",
+								"completions"
+							]
+						},
+						"description": "Test avec une clé API valide"
+					},
+					"response": []
+				},
+				{
+					"name": "Test with Invalid API Key",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer invalid-key-12345",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"model\": \"auto\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Test\"\n    }\n  ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/chat/completions",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"chat",
+								"completions"
+							]
+						},
+						"description": "Test avec une clé API invalide (devrait retourner 403)"
+					},
+					"response": []
+				},
+				{
+					"name": "Test without API Key",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"model\": \"auto\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Test\"\n    }\n  ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/chat/completions",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"chat",
+								"completions"
+							]
+						},
+						"description": "Test sans clé API (devrait retourner 401 si auth activée)"
+					},
+					"response": []
+				}
+			],
+			"description": "Tests d'authentification"
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8001",
+			"type": "string"
+		},
+		{
+			"key": "api_key",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
+

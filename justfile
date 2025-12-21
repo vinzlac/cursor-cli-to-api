@@ -223,6 +223,11 @@ docker-build:
     @echo "🐳 Construction de l'image Docker..."
     docker build -t cursor-openai-proxy:latest .
 
+# Build l'image Docker avec tag basé sur la version de cursor-agent et le hash git
+docker-build-tagged:
+    @echo "🐳 Construction de l'image Docker avec tag personnalisé..."
+    @./scripts/docker-build-tagged.sh
+
 # Lance avec Docker Compose
 docker-up:
     @echo "🚀 Démarrage avec Docker Compose..."

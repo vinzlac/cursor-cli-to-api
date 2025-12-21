@@ -130,7 +130,7 @@ RELOAD=false
 
 1. **HTTPS/TLS:**
    - Utilisez HTTPS en production (avec Nginx + Let's Encrypt)
-   - Voir `DEPLOYMENT.md` pour la configuration
+   - Voir [DEPLOYMENT.md](DEPLOYMENT.md) pour la configuration
 
 2. **Rate Limiting:**
    - Activez le `RateLimitMiddleware` dans `main.py`:

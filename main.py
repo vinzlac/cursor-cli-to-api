@@ -86,31 +86,35 @@ class ChatCompletionChunk(BaseModel):
     choices: List[Dict[str, Any]]
 
 
-# Mapping des modèles OpenAI/Anthropic vers les modèles cursor-agent
-# Modèles réels disponibles: composer-1, auto, sonnet-4.5, sonnet-4.5-thinking,
-# gpt-5, gpt-5-codex, gpt-5-codex-high, opus-4.1, grok
-MODEL_MAPPING = {
-    # Modèles OpenAI → gpt-5
-    "gpt-4o": "gpt-5",
-    "gpt-4o-mini": "gpt-5",
-    "gpt-4-turbo": "gpt-5",
-    "gpt-4": "gpt-5",
-    "gpt-3.5-turbo": "gpt-5",
+# Cache pour la liste des modèles disponibles (mis à jour dynamiquement)
+_available_models_cache: Optional[List[str]] = None
+_cache_timestamp: Optional[float] = None
+CACHE_DURATION = 300  # 5 minutes
+
+# Mapping optionnel pour les alias de compatibilité (OpenAI/Anthropic)
+# Ces alias sont mappés vers les modèles cursor-agent réels
+ALIAS_MAPPING = {
+    # Alias OpenAI → modèles GPT (mappage intelligent selon disponibilité)
+    "gpt-4o": None,  # Sera mappé dynamiquement vers gpt-5.2 ou gpt-5.1
+    "gpt-4o-mini": None,  # Sera mappé dynamiquement
+    "gpt-4-turbo": None,
+    "gpt-4": None,
+    "gpt-3.5-turbo": None,
     
-    # Modèles Anthropic Claude Sonnet → sonnet-4.5
+    # Alias Anthropic Claude Sonnet
     "claude-3-5-sonnet-20241022": "sonnet-4.5",
     "claude-3-5-sonnet": "sonnet-4.5",
     "claude-sonnet-4.5": "sonnet-4.5",
     "claude-sonnet-4": "sonnet-4.5",
-    "sonnet-4": "sonnet-4.5",  # Ancien nom
+    "sonnet-4": "sonnet-4.5",
     
-    # Modèles Anthropic Claude Sonnet avec thinking → sonnet-4.5-thinking
+    # Alias Anthropic Claude Sonnet thinking
     "claude-3-5-sonnet-thinking": "sonnet-4.5-thinking",
-    "sonnet-4-thinking": "sonnet-4.5-thinking",  # Ancien nom
+    "sonnet-4-thinking": "sonnet-4.5-thinking",
     
-    # Modèles Anthropic Opus → opus-4.1
-    "claude-opus-4": "opus-4.1",
-    "claude-4-opus": "opus-4.1",
+    # Alias Anthropic Opus
+    "claude-opus-4": None,  # Sera mappé vers opus-4.5 ou opus-4.1 selon disponibilité
+    "claude-4-opus": None,
     
     # Modèles génériques
     "cursor-agent": "auto",
@@ -119,34 +123,124 @@ MODEL_MAPPING = {
 }
 
 
-def map_model_name(model: str) -> str:
+async def get_available_models() -> List[str]:
     """
-    Mappe un nom de modèle OpenAI vers un nom de modèle cursor-agent.
-    Si le modèle n'est pas trouvé dans le mapping, retourne "default".
-    
-    Args:
-        model: Nom du modèle (format OpenAI ou cursor-agent)
+    Récupère la liste des modèles disponibles depuis cursor-agent.
+    Utilise un cache pour éviter d'interroger cursor-agent à chaque requête.
     
     Returns:
-        Nom du modèle au format cursor-agent
+        Liste des noms de modèles disponibles
     """
-    mapped = MODEL_MAPPING.get(model.lower())
-    if mapped:
-        logger.info(f"Modèle '{model}' mappé vers '{mapped}'")
-        return mapped
+    global _available_models_cache, _cache_timestamp
     
-    # Si pas de mapping trouvé, vérifier si c'est déjà un modèle cursor-agent valide
-    cursor_models = [
-        "composer-1", "auto", "sonnet-4.5", "sonnet-4.5-thinking",
-        "gpt-5", "gpt-5-codex", "gpt-5-codex-high", "opus-4.1", "grok"
-    ]
-    if model in cursor_models:
-        logger.info(f"Modèle '{model}' utilisé tel quel")
+    # Vérifier le cache
+    current_time = datetime.now().timestamp()
+    if _available_models_cache and _cache_timestamp:
+        if current_time - _cache_timestamp < CACHE_DURATION:
+            return _available_models_cache
+    
+    # Récupérer la liste depuis cursor-agent
+    try:
+        # Essayer d'obtenir la liste via une commande cursor-agent
+        # Si cursor-agent ne supporte pas --list-models, on utilise une méthode de fallback
+        cli_path = settings.cursor_agent_cli_path or "cursor-agent"
+        env = os.environ.copy()
+        if settings.cursor_api_key:
+            env["CURSOR_API_KEY"] = settings.cursor_api_key
+        
+        # Méthode 1: Essayer avec un modèle invalide pour obtenir la liste
+        # (cursor-agent retourne la liste dans le message d'erreur)
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(
+            None,
+            lambda: subprocess.run(
+                [cli_path, "--model", "invalid-model-test", "test"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                env=env
+            )
+        )
+        
+        # Parser la liste depuis le message d'erreur
+        # Le message peut être dans stderr ou stdout
+        error_msg = result.stderr or result.stdout or ""
+        
+        if result.returncode != 0 and "Available models:" in error_msg:
+            # Extraire la liste des modèles depuis le message d'erreur
+            # Format: "Available models: composer-1, auto, sonnet-4.5, ..."
+            models_line = error_msg.split("Available models:")[1].strip()
+            # Prendre seulement la première ligne (avant \n si présent)
+            models_line = models_line.split("\n")[0].strip()
+            # Parser: "composer-1, auto, sonnet-4.5, ..."
+            models = [m.strip() for m in models_line.split(",") if m.strip()]
+            if models:
+                _available_models_cache = models
+                _cache_timestamp = current_time
+                logger.info(f"Modèles disponibles détectés: {models}")
+                return models
+        
+        # Méthode 2: Fallback - utiliser une liste par défaut si la détection échoue
+        logger.warning("Impossible de détecter les modèles, utilisation de la liste par défaut")
+        default_models = ["auto", "composer-1"]
+        _available_models_cache = default_models
+        _cache_timestamp = current_time
+        return default_models
+        
+    except Exception as e:
+        logger.error(f"Erreur lors de la récupération des modèles: {e}")
+        # Fallback vers une liste minimale
+        default_models = ["auto", "composer-1"]
+        _available_models_cache = default_models
+        _cache_timestamp = current_time
+        return default_models
+
+
+def map_model_name(model: str, available_models: List[str]) -> str:
+    """
+    Mappe un nom de modèle vers un nom de modèle cursor-agent valide.
+    Utilise la liste dynamique des modèles disponibles.
+    
+    Args:
+        model: Nom du modèle (format OpenAI, Anthropic ou cursor-agent)
+        available_models: Liste des modèles disponibles depuis cursor-agent
+    
+    Returns:
+        Nom du modèle au format cursor-agent valide
+    """
+    model_lower = model.lower()
+    
+    # Vérifier d'abord si c'est déjà un modèle cursor-agent valide
+    if model in available_models:
+        logger.info(f"Modèle '{model}' utilisé tel quel (modèle cursor-agent)")
         return model
     
-    # Sinon, utiliser le modèle par défaut (auto)
-    logger.warning(f"Modèle '{model}' non reconnu, utilisation de 'auto'")
-    return "auto"
+    # Vérifier les alias avec mapping fixe
+    if model_lower in ALIAS_MAPPING:
+        mapped = ALIAS_MAPPING[model_lower]
+        if mapped and mapped in available_models:
+            logger.info(f"Modèle '{model}' mappé vers '{mapped}' (alias)")
+            return mapped
+        elif mapped is None:
+            # Mapping intelligent pour les alias None (gpt-4o, opus, etc.)
+            # Chercher le meilleur modèle disponible
+            if model_lower.startswith("gpt-"):
+                # Chercher un modèle GPT disponible
+                for gpt_model in ["gpt-5.2", "gpt-5.1", "gpt-5"]:
+                    if gpt_model in available_models:
+                        logger.info(f"Modèle '{model}' mappé vers '{gpt_model}' (alias GPT)")
+                        return gpt_model
+            elif "opus" in model_lower:
+                # Chercher un modèle Opus disponible
+                for opus_model in ["opus-4.5", "opus-4.1"]:
+                    if opus_model in available_models:
+                        logger.info(f"Modèle '{model}' mappé vers '{opus_model}' (alias Opus)")
+                        return opus_model
+    
+    # Si aucun mapping trouvé, utiliser le modèle par défaut
+    default_model = "auto" if "auto" in available_models else available_models[0] if available_models else "auto"
+    logger.warning(f"Modèle '{model}' non reconnu, utilisation de '{default_model}'")
+    return default_model
 
 
 async def call_cursor_agent(messages: List[Message], model: str = "auto") -> str:
@@ -307,8 +401,11 @@ async def chat_completions(request: ChatCompletionRequest):
         )
     
     try:
+        # Récupérer la liste des modèles disponibles
+        available_models = await get_available_models()
+        
         # Mapper le modèle au format cursor-agent
-        cursor_model = map_model_name(request.model)
+        cursor_model = map_model_name(request.model, available_models)
         
         # Appeler cursor-agent avec le modèle mappé
         response_content = await call_cursor_agent(request.messages, cursor_model)
@@ -350,8 +447,11 @@ async def chat_completions_stream(request: ChatCompletionRequest):
     """
     async def generate():
         try:
+            # Récupérer la liste des modèles disponibles
+            available_models = await get_available_models()
+            
             # Mapper le modèle au format cursor-agent
-            cursor_model = map_model_name(request.model)
+            cursor_model = map_model_name(request.model, available_models)
             
             # Appeler cursor-agent avec le modèle mappé
             response_content = await call_cursor_agent(request.messages, cursor_model)
@@ -409,36 +509,86 @@ async def list_models():
     """
     Liste les modèles disponibles (compatible OpenAI)
     
-    Retourne tous les modèles supportés par cursor-agent, ainsi que leurs alias OpenAI/Anthropic.
+    Retourne tous les modèles supportés par cursor-agent (détectés dynamiquement),
+    ainsi que leurs alias OpenAI/Anthropic pour la compatibilité.
     """
     timestamp = int(datetime.now().timestamp())
     
-    # Modèles natifs cursor-agent (basé sur: cursor-agent --help)
-    native_models = [
-        {"id": "auto", "object": "model", "created": timestamp, "owned_by": "cursor"},
-        {"id": "composer-1", "object": "model", "created": timestamp, "owned_by": "cursor"},
-        {"id": "gpt-5", "object": "model", "created": timestamp, "owned_by": "openai"},
-        {"id": "gpt-5-codex", "object": "model", "created": timestamp, "owned_by": "openai"},
-        {"id": "gpt-5-codex-high", "object": "model", "created": timestamp, "owned_by": "openai"},
-        {"id": "sonnet-4.5", "object": "model", "created": timestamp, "owned_by": "anthropic"},
-        {"id": "sonnet-4.5-thinking", "object": "model", "created": timestamp, "owned_by": "anthropic"},
-        {"id": "opus-4.1", "object": "model", "created": timestamp, "owned_by": "anthropic"},
-        {"id": "grok", "object": "model", "created": timestamp, "owned_by": "xai"},
-    ]
+    # Récupérer la liste dynamique des modèles depuis cursor-agent
+    available_models = await get_available_models()
     
-    # Alias populaires (pour compatibilité avec clients OpenAI/Anthropic)
-    alias_models = [
-        # Alias OpenAI
-        {"id": "gpt-4o", "object": "model", "created": timestamp, "owned_by": "openai"},
-        {"id": "gpt-4o-mini", "object": "model", "created": timestamp, "owned_by": "openai"},
-        {"id": "gpt-4-turbo", "object": "model", "created": timestamp, "owned_by": "openai"},
-        {"id": "gpt-4", "object": "model", "created": timestamp, "owned_by": "openai"},
-        {"id": "gpt-3.5-turbo", "object": "model", "created": timestamp, "owned_by": "openai"},
-        # Alias Anthropic
-        {"id": "claude-3-5-sonnet-20241022", "object": "model", "created": timestamp, "owned_by": "anthropic"},
-        {"id": "claude-3-5-sonnet", "object": "model", "created": timestamp, "owned_by": "anthropic"},
-        {"id": "claude-opus-4", "object": "model", "created": timestamp, "owned_by": "anthropic"},
-    ]
+    # Déterminer le propriétaire selon le préfixe du modèle
+    def get_owner(model_id: str) -> str:
+        if model_id.startswith("gpt-"):
+            return "openai"
+        elif model_id.startswith("sonnet-") or model_id.startswith("opus-") or model_id.startswith("claude-"):
+            return "anthropic"
+        elif model_id.startswith("gemini-"):
+            return "google"
+        elif model_id == "grok":
+            return "xai"
+        elif model_id in ["auto", "composer-1"]:
+            return "cursor"
+        else:
+            return "cursor"
+    
+    # Créer un set pour éviter les doublons
+    seen_models = set()
+    
+    # Créer la liste des modèles natifs cursor-agent
+    native_models = []
+    for model_id in available_models:
+        if model_id not in seen_models:
+            native_models.append({
+                "id": model_id,
+                "object": "model",
+                "created": timestamp,
+                "owned_by": get_owner(model_id)
+            })
+            seen_models.add(model_id)
+    
+    # Ajouter les alias pour compatibilité (uniquement ceux qui ont un mapping)
+    alias_models = []
+    for alias, mapped in ALIAS_MAPPING.items():
+        # Ignorer les alias qui sont déjà dans la liste des modèles natifs
+        if alias in seen_models:
+            continue
+            
+        # Ajouter l'alias si :
+        # 1. Il a un mapping fixe (mapped n'est pas None)
+        # 2. Ou s'il commence par gpt- ou opus (mapping intelligent)
+        if mapped and mapped in available_models:
+            alias_models.append({
+                "id": alias,
+                "object": "model",
+                "created": timestamp,
+                "owned_by": get_owner(mapped)
+            })
+            seen_models.add(alias)
+        elif mapped is None and (alias.startswith("gpt-") or "opus" in alias):
+            # Pour les alias avec mapping intelligent, ajouter s'il y a un modèle compatible disponible
+            if alias.startswith("gpt-"):
+                for gpt_model in ["gpt-5.2", "gpt-5.1", "gpt-5"]:
+                    if gpt_model in available_models:
+                        alias_models.append({
+                            "id": alias,
+                            "object": "model",
+                            "created": timestamp,
+                            "owned_by": "openai"
+                        })
+                        seen_models.add(alias)
+                        break
+            elif "opus" in alias:
+                for opus_model in ["opus-4.5", "opus-4.1"]:
+                    if opus_model in available_models:
+                        alias_models.append({
+                            "id": alias,
+                            "object": "model",
+                            "created": timestamp,
+                            "owned_by": "anthropic"
+                        })
+                        seen_models.add(alias)
+                        break
     
     return {
         "object": "list",

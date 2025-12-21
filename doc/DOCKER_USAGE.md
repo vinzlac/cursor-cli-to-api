@@ -140,10 +140,36 @@ docker-compose restart
 ### Commandes just (alias pratiques)
 
 ```bash
-just docker-build     # Build l'image
-just docker-up        # Démarrer
-just docker-logs      # Voir les logs
-just docker-down      # Arrêter
+just docker-build          # Build l'image avec le tag 'latest'
+just docker-build-tagged   # Build l'image avec tag: version-cursor-agent-hash-git
+just docker-up             # Démarrer
+just docker-logs           # Voir les logs
+just docker-down           # Arrêter
+```
+
+### Tagging automatique des images
+
+Le script `docker-build-tagged` crée automatiquement un tag basé sur :
+- La version de cursor-agent (ex: `2025.12.17-996666f`)
+- Le hash git du code (ex: `bac7c3c`)
+
+**Format du tag :** `version-cursor-agent-hash-git`
+
+**Exemple :**
+```bash
+just docker-build-tagged
+# Crée les tags:
+# - cursor-openai-proxy:latest
+# - cursor-openai-proxy:2025.12.17-996666f-bac7c3c
+```
+
+**Utilisation :**
+```bash
+# Utiliser l'image avec le tag spécifique
+docker run -p 8001:8001 --env-file .env cursor-openai-proxy:2025.12.17-996666f-bac7c3c
+
+# Ou avec docker-compose (modifier docker-compose.yml)
+# image: cursor-openai-proxy:2025.12.17-996666f-bac7c3c
 ```
 
 ## 🔍 Debugging
@@ -296,10 +322,10 @@ networks:
 - [Docker Documentation](https://docs.docker.com/)
 - [Docker Compose Documentation](https://docs.docker.com/compose/)
 - [FastAPI Docker Deployment](https://fastapi.tiangolo.com/deployment/docker/)
-- Guide principal: [README.md](./README.md)
-- Configuration: [CONFIGURATION.md](./CONFIGURATION.md)
-- Déploiement: [DEPLOYMENT.md](./DEPLOYMENT.md)
-- Sécurité: [SECURITY.md](./SECURITY.md)
+- Guide principal: [README.md](../README.md)
+- Configuration: [CONFIGURATION.md](CONFIGURATION.md)
+- Déploiement: [DEPLOYMENT.md](DEPLOYMENT.md)
+- Sécurité: [SECURITY.md](SECURITY.md)
 
 ## 💡 Trucs et astuces
 

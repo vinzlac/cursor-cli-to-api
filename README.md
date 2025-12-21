@@ -239,6 +239,20 @@ Ou utilisez:
 just docs  # Ouvre automatiquement la documentation dans le navigateur
 ```
 
+### Collection Postman
+
+Une collection Postman complète est disponible pour tester l'API :
+- Fichier : `postman/Cursor-API-Proxy.postman_collection.json`
+- Environnement : `postman/Local.postman_environment.json`
+- Documentation : `postman/README.md`
+
+**Import dans Postman :**
+1. Ouvrez Postman
+2. Cliquez sur **Import**
+3. Sélectionnez `postman/Cursor-API-Proxy.postman_collection.json`
+4. (Optionnel) Importez aussi `postman/Local.postman_environment.json`
+5. Configurez la variable `api_key` si l'authentification est activée
+
 ## 🤖 Modèles supportés
 
 Le proxy supporte tous les modèles disponibles dans cursor-agent et mappe automatiquement les noms de modèles OpenAI/Anthropic populaires.
@@ -420,9 +434,9 @@ code .env
 3. **Sécurité (production):**
    - `API_KEY` : Clé API pour protéger VOTRE API proxy (générée par vous, pas liée à cursor-agent)
    
-   ⚠️ **Important:** `API_KEY` protège votre API proxy, pas cursor-agent. Si cursor-agent nécessite une authentification, voir `SECURITY.md`.
+   ⚠️ **Important:** `API_KEY` protège votre API proxy, pas cursor-agent. Si cursor-agent nécessite une authentification, voir [SECURITY.md](doc/SECURITY.md).
 
-Voir [CONFIGURATION.md](CONFIGURATION.md) pour le guide complet de configuration et [INTEGRATION.md](INTEGRATION.md) pour les détails sur l'intégration avec cursor-agent.
+Voir [CONFIGURATION.md](doc/CONFIGURATION.md) pour le guide complet de configuration et [INTEGRATION.md](doc/INTEGRATION.md) pour les détails sur l'intégration avec cursor-agent.
 
 ### Adapter l'appel à cursor-agent
 
@@ -431,7 +445,7 @@ Dans le fichier `main.py`, les fonctions d'intégration peuvent être adaptées:
 - `_call_cursor_agent_http()` - pour le mode HTTP  
 - `_call_cursor_agent_library()` - pour le mode Library
 
-Voir `INTEGRATION.md` pour les détails.
+Voir [INTEGRATION.md](doc/INTEGRATION.md) pour les détails.
 
 ## 🔧 Exemple d'utilisation avec le client OpenAI Python
 
@@ -487,7 +501,7 @@ Pour la production, ajoutez:
 - Logging et monitoring
 - HTTPS/TLS
 
-Voir `DEPLOYMENT.md` pour les détails sur le déploiement sécurisé.
+Voir [DEPLOYMENT.md](doc/DEPLOYMENT.md) pour les détails sur le déploiement sécurisé.
 
 ## 🧪 Tests
 
@@ -653,12 +667,14 @@ just docs             # Ouvrir la documentation
 
 ## 📚 Documentation complémentaire
 
-- [Guide de démarrage rapide](QUICK_START.md) - Démarrage en 5 minutes
-- [Guide de configuration](CONFIGURATION.md) - Configuration détaillée du .env
-- [Guide d'intégration](INTEGRATION.md) - Comment intégrer avec cursor-agent
-- [Guide de sécurité](SECURITY.md) - Authentification et sécurité
-- [Guide de déploiement](DEPLOYMENT.md) - Déploiement en production
-- [Prochaines étapes](NEXT_STEPS.md) - Checklist et améliorations
+- [Guide de démarrage rapide](doc/QUICK_START.md) - Démarrage en 5 minutes
+- [Guide de configuration](doc/CONFIGURATION.md) - Configuration détaillée du .env
+- [Guide d'intégration](doc/INTEGRATION.md) - Comment intégrer avec cursor-agent
+- [Guide de sécurité](doc/SECURITY.md) - Authentification et sécurité
+- [Guide de déploiement](doc/DEPLOYMENT.md) - Déploiement en production
+- [Guide Docker](doc/DOCKER_USAGE.md) - Utilisation avec Docker
+- [Prochaines étapes](doc/NEXT_STEPS.md) - Checklist et améliorations
+- [Points à améliorer](doc/AMELIORATIONS.md) - Améliorations suggérées
 
 ## 🤝 Contribution
 

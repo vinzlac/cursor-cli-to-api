@@ -220,6 +220,6 @@ Le fichier `.env` utilise un format simple `KEY=VALUE`. Évitez:
 
 ## 📚 Références
 
-- Voir `INTEGRATION.md` pour les détails sur l'intégration avec cursor-agent
-- Voir `DEPLOYMENT.md` pour la configuration en production
+- Voir [INTEGRATION.md](INTEGRATION.md) pour les détails sur l'intégration avec cursor-agent
+- Voir [DEPLOYMENT.md](DEPLOYMENT.md) pour la configuration en production
 - Voir `config.py` pour la liste complète des variables disponibles

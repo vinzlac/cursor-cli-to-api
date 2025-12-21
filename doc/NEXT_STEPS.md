@@ -25,7 +25,7 @@ cp .env.example .env
 - Si cursor-agent expose une API: `CURSOR_AGENT_MODE=http` + `CURSOR_AGENT_HTTP_URL=...`
 - Si cursor-agent est une bibliothèque Python: `CURSOR_AGENT_MODE=library`
 
-Voir `INTEGRATION.md` pour les détails.
+Voir [INTEGRATION.md](INTEGRATION.md) pour les détails.
 
 ### 2. Tester l'installation
 
@@ -81,7 +81,7 @@ just example
 ## 📚 Ressources
 
 - [Guide d'intégration](INTEGRATION.md) - Comment intégrer avec cursor-agent
-- [README](README.md) - Documentation principale
+- [README](../README.md) - Documentation principale
 - [FastAPI Documentation](https://fastapi.tiangolo.com/)
 - [OpenAI API Reference](https://platform.openai.com/docs/api-reference)
 
