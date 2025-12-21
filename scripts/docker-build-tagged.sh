@@ -24,8 +24,17 @@ fi
 echo "📦 Hash git: $GIT_HASH"
 
 # Construire l'image avec le tag de base
+# ⚠️ IMPORTANT: Ne pas passer de variables d'environnement sensibles au build
+# Les variables d'environnement doivent être passées au runtime (docker run, docker-compose)
+# 
+# NOTE: Docker Desktop sur Mac peut automatiquement passer les variables d'environnement
+# du système au build. Si vous voyez des variables sensibles dans l'image (docker inspect),
+# reconstruisez l'image depuis un terminal propre ou utilisez docker-compose qui gère
+# correctement les variables d'environnement au runtime.
 echo ""
 echo "🔨 Construction de l'image Docker..."
+echo "   ⚠️  SÉCURITÉ: Les variables d'environnement sensibles ne doivent PAS être dans l'image"
+echo "   Elles doivent être passées au runtime via --env-file ou docker-compose"
 docker build -t "${IMAGE_NAME}:${BASE_TAG}" .
 
 # Extraire la version de cursor-agent depuis l'image construite

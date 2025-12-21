@@ -9,6 +9,7 @@ services:
     ports:
       - "8001:8001"
     environment:
+      # Variables minimales nécessaires - NE PAS utiliser env_file pour éviter d'exposer tout le .env
       - CURSOR_AGENT_MODE=${CURSOR_AGENT_MODE:-cli}
       - CURSOR_AGENT_CLI_PATH=${CURSOR_AGENT_CLI_PATH:-cursor-agent}
       - CURSOR_AGENT_HTTP_URL=${CURSOR_AGENT_HTTP_URL:-}
@@ -19,11 +20,6 @@ services:
       - HOST=0.0.0.0
       - PORT=8001
       - RELOAD=false
-    # volumes:
-      # Optionnel: monter le code pour le développement
-      # - .:/app
-    env_file:
-      - .env
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
@@ -31,3 +27,4 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+

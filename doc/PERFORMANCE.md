@@ -237,4 +237,5 @@ LOG_LEVEL=DEBUG python main.py
 - [Documentation cursor-agent](https://docs.cursor.com)
 - [Guide d'intégration](INTEGRATION.md)
 - [Points à améliorer](AMELIORATIONS.md)
+- [Processus persistant et sessions](PERSISTENT_PROCESS.md) - Tests détaillés sur les processus persistants
 

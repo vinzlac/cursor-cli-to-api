@@ -652,10 +652,28 @@ just lint             # Vérifier le code
 just check            # Format + lint
 
 # Docker
-just docker-build     # Construire l'image Docker
-just docker-up        # Démarrer avec Docker Compose
-just docker-down      # Arrêter Docker Compose
-just docker-logs      # Voir les logs
+just docker-build                    # Construire l'image Docker (tag: latest)
+just docker-build-tagged            # Construire l'image Docker avec tag versionné (version-cursor-agent-hash-git)
+
+# Docker Compose
+just docker-up                       # Démarrer avec Docker Compose (utilise .env complet)
+just docker-compose-secure           # Démarrer Docker Compose en mode SÉCURISÉ (avec API_KEY)
+just docker-compose-insecure         # Démarrer Docker Compose en mode NON SÉCURISÉ (sans API_KEY)
+just docker-down                     # Arrêter Docker Compose
+just docker-compose-down-secure      # Arrêter Docker Compose (mode sécurisé)
+just docker-compose-down-insecure    # Arrêter Docker Compose (mode non sécurisé)
+just docker-logs                     # Voir les logs Docker Compose
+just docker-compose-logs-secure      # Voir les logs (mode sécurisé)
+just docker-compose-logs-insecure    # Voir les logs (mode non sécurisé)
+
+# Docker Run (sans docker-compose)
+just docker-run-secure               # Démarrer Docker Run en mode SÉCURISÉ (avec API_KEY)
+just docker-run-insecure             # Démarrer Docker Run en mode NON SÉCURISÉ (sans API_KEY)
+just docker-run-down-secure          # Arrêter Docker Run (mode sécurisé)
+just docker-run-down-insecure        # Arrêter Docker Run (mode non sécurisé)
+just docker-run-down                 # Arrêter tous les conteneurs Docker Run
+just docker-run-logs-secure         # Voir les logs Docker Run (mode sécurisé)
+just docker-run-logs-insecure       # Voir les logs Docker Run (mode non sécurisé)
 
 # Utilitaires
 just clean            # Nettoyer les fichiers générés
@@ -673,6 +691,9 @@ just docs             # Ouvrir la documentation
 - [Guide de sécurité](doc/SECURITY.md) - Authentification et sécurité
 - [Guide de déploiement](doc/DEPLOYMENT.md) - Déploiement en production
 - [Guide Docker](doc/DOCKER_USAGE.md) - Utilisation avec Docker
+- [Guide de performance](doc/PERFORMANCE.md) - Analyse des performances et optimisations
+- [Processus persistant et sessions](doc/PERSISTENT_PROCESS.md) - Tests sur les processus persistants
+- [Guide des tests](doc/TESTS.md) - Scripts de test et validation
 - [Prochaines étapes](doc/NEXT_STEPS.md) - Checklist et améliorations
 - [Points à améliorer](doc/AMELIORATIONS.md) - Améliorations suggérées
 

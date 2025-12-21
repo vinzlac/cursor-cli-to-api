@@ -233,15 +233,225 @@ docker-up:
     @echo "🚀 Démarrage avec Docker Compose..."
     docker-compose up -d
 
+# Lance Docker Compose en mode SÉCURISÉ (avec API_KEY)
+docker-compose-secure:
+    #!/usr/bin/env bash
+    echo "🔒 Démarrage Docker Compose en mode SÉCURISÉ (avec API_KEY)..."
+    if [ ! -f .env ]; then
+        echo "❌ Fichier .env non trouvé"
+        exit 1
+    fi
+    # Charger uniquement les variables nécessaires depuis .env
+    # NE PAS utiliser env_file dans docker-compose pour éviter d'exposer tout le .env
+    export CURSOR_API_KEY=$(grep "^CURSOR_API_KEY=" .env | cut -d= -f2- | tr -d '"' | tr -d "'")
+    export API_KEY=$(grep "^API_KEY=" .env | cut -d= -f2- | tr -d '"' | tr -d "'")
+    export CURSOR_AGENT_MODE=${CURSOR_AGENT_MODE:-cli}
+    export LOG_LEVEL=${LOG_LEVEL:-INFO}
+    
+    if [ -z "$CURSOR_API_KEY" ]; then
+        echo "⚠️  CURSOR_API_KEY non trouvée dans .env"
+    fi
+    if [ -z "$API_KEY" ]; then
+        echo "⚠️  API_KEY non trouvée dans .env"
+        echo "   L'API sera accessible sans authentification"
+    fi
+    
+    docker-compose -f docker-compose.secure.yml up -d
+    
+    echo "✅ Docker Compose lancé en mode sécurisé"
+    echo "   Fichier: docker-compose.secure.yml"
+    echo "   Port: 8001"
+    echo "   API nécessite: Authorization: Bearer <API_KEY>"
+    echo ""
+    echo "💡 Commandes utiles:"
+    echo "   docker-compose -f docker-compose.secure.yml logs -f"
+    echo "   docker-compose -f docker-compose.secure.yml down"
+
+# Lance Docker Compose en mode NON SÉCURISÉ (sans API_KEY)
+docker-compose-insecure:
+    #!/usr/bin/env bash
+    echo "🔓 Démarrage Docker Compose en mode NON SÉCURISÉ (sans API_KEY)..."
+    if [ ! -f .env ]; then
+        echo "❌ Fichier .env non trouvé"
+        exit 1
+    fi
+    # Charger uniquement CURSOR_API_KEY depuis .env (pas API_KEY)
+    # NE PAS utiliser env_file dans docker-compose pour éviter d'exposer tout le .env
+    export CURSOR_API_KEY=$(grep "^CURSOR_API_KEY=" .env | cut -d= -f2- | tr -d '"' | tr -d "'")
+    export CURSOR_AGENT_MODE=${CURSOR_AGENT_MODE:-cli}
+    export LOG_LEVEL=${LOG_LEVEL:-INFO}
+    
+    if [ -z "$CURSOR_API_KEY" ]; then
+        echo "⚠️  CURSOR_API_KEY non trouvée dans .env"
+    fi
+    
+    docker-compose -f docker-compose.insecure.yml up -d
+    
+    echo "✅ Docker Compose lancé en mode non sécurisé"
+    echo "   Fichier: docker-compose.insecure.yml"
+    echo "   Port: 8001"
+    echo "   ⚠️  API accessible SANS authentification"
+    echo ""
+    echo "💡 Commandes utiles:"
+    echo "   docker-compose -f docker-compose.insecure.yml logs -f"
+    echo "   docker-compose -f docker-compose.insecure.yml down"
+
 # Arrête Docker Compose
 docker-down:
     @echo "🛑 Arrêt de Docker Compose..."
     docker-compose down
 
+# Arrête Docker Compose (mode sécurisé)
+docker-compose-down-secure:
+    @echo "🛑 Arrêt de Docker Compose (mode sécurisé)..."
+    docker-compose -f docker-compose.secure.yml down
+
+# Arrête Docker Compose (mode non sécurisé)
+docker-compose-down-insecure:
+    @echo "🛑 Arrêt de Docker Compose (mode non sécurisé)..."
+    docker-compose -f docker-compose.insecure.yml down
+
 # Voir les logs Docker
 docker-logs:
     @echo "📋 Logs Docker..."
     docker-compose logs -f
+
+# Voir les logs Docker Compose (mode sécurisé)
+docker-compose-logs-secure:
+    @echo "📋 Logs Docker Compose (mode sécurisé)..."
+    docker-compose -f docker-compose.secure.yml logs -f
+
+# Voir les logs Docker Compose (mode non sécurisé)
+docker-compose-logs-insecure:
+    @echo "📋 Logs Docker Compose (mode non sécurisé)..."
+    docker-compose -f docker-compose.insecure.yml logs -f
+
+# ============================================================================
+# Docker Run (sans docker-compose)
+# ============================================================================
+
+# Lance Docker Run en mode SÉCURISÉ (avec API_KEY)
+docker-run-secure:
+    #!/usr/bin/env bash
+    echo "🔒 Démarrage Docker Run en mode SÉCURISÉ (avec API_KEY)..."
+    if [ ! -f .env ]; then
+        echo "❌ Fichier .env non trouvé"
+        exit 1
+    fi
+    # Charger uniquement les variables nécessaires depuis .env
+    export CURSOR_API_KEY=$(grep "^CURSOR_API_KEY=" .env | cut -d= -f2- | tr -d '"' | tr -d "'")
+    export API_KEY=$(grep "^API_KEY=" .env | cut -d= -f2- | tr -d '"' | tr -d "'")
+    export CURSOR_AGENT_MODE=${CURSOR_AGENT_MODE:-cli}
+    export LOG_LEVEL=${LOG_LEVEL:-INFO}
+    
+    if [ -z "$CURSOR_API_KEY" ]; then
+        echo "⚠️  CURSOR_API_KEY non trouvée dans .env"
+    fi
+    if [ -z "$API_KEY" ]; then
+        echo "⚠️  API_KEY non trouvée dans .env"
+        echo "   L'API sera accessible sans authentification"
+    fi
+    
+    # Arrêter et supprimer le conteneur existant s'il existe
+    docker stop cursor-api-run-secure 2>/dev/null || true
+    docker rm cursor-api-run-secure 2>/dev/null || true
+    
+    docker run -d \
+        --name cursor-api-run-secure \
+        -p 8001:8001 \
+        -e CURSOR_API_KEY="$CURSOR_API_KEY" \
+        -e API_KEY="$API_KEY" \
+        -e CURSOR_AGENT_MODE="$CURSOR_AGENT_MODE" \
+        -e LOG_LEVEL="$LOG_LEVEL" \
+        -e HOST=0.0.0.0 \
+        -e PORT=8001 \
+        -e RELOAD=false \
+        --restart unless-stopped \
+        cursor-openai-proxy:latest
+    
+    echo "✅ Conteneur Docker Run lancé en mode sécurisé"
+    echo "   Nom: cursor-api-run-secure"
+    echo "   Port: 8001"
+    echo "   API nécessite: Authorization: Bearer <API_KEY>"
+    echo ""
+    echo "💡 Commandes utiles:"
+    echo "   docker logs -f cursor-api-run-secure"
+    echo "   docker stop cursor-api-run-secure"
+    echo "   docker rm cursor-api-run-secure"
+
+# Lance Docker Run en mode NON SÉCURISÉ (sans API_KEY)
+docker-run-insecure:
+    #!/usr/bin/env bash
+    echo "🔓 Démarrage Docker Run en mode NON SÉCURISÉ (sans API_KEY)..."
+    if [ ! -f .env ]; then
+        echo "❌ Fichier .env non trouvé"
+        exit 1
+    fi
+    # Charger uniquement CURSOR_API_KEY depuis .env (pas API_KEY)
+    export CURSOR_API_KEY=$(grep "^CURSOR_API_KEY=" .env | cut -d= -f2- | tr -d '"' | tr -d "'")
+    export CURSOR_AGENT_MODE=${CURSOR_AGENT_MODE:-cli}
+    export LOG_LEVEL=${LOG_LEVEL:-INFO}
+    
+    if [ -z "$CURSOR_API_KEY" ]; then
+        echo "⚠️  CURSOR_API_KEY non trouvée dans .env"
+    fi
+    
+    # Arrêter et supprimer le conteneur existant s'il existe
+    docker stop cursor-api-run-insecure 2>/dev/null || true
+    docker rm cursor-api-run-insecure 2>/dev/null || true
+    
+    docker run -d \
+        --name cursor-api-run-insecure \
+        -p 8001:8001 \
+        -e CURSOR_API_KEY="$CURSOR_API_KEY" \
+        -e CURSOR_AGENT_MODE="$CURSOR_AGENT_MODE" \
+        -e LOG_LEVEL="$LOG_LEVEL" \
+        -e HOST=0.0.0.0 \
+        -e PORT=8001 \
+        -e RELOAD=false \
+        --restart unless-stopped \
+        cursor-openai-proxy:latest
+    
+    echo "✅ Conteneur Docker Run lancé en mode non sécurisé"
+    echo "   Nom: cursor-api-run-insecure"
+    echo "   Port: 8001"
+    echo "   ⚠️  API accessible SANS authentification"
+    echo ""
+    echo "💡 Commandes utiles:"
+    echo "   docker logs -f cursor-api-run-insecure"
+    echo "   docker stop cursor-api-run-insecure"
+    echo "   docker rm cursor-api-run-insecure"
+
+# Arrête Docker Run (mode sécurisé)
+docker-run-down-secure:
+    @echo "🛑 Arrêt de Docker Run (mode sécurisé)..."
+    @docker stop cursor-api-run-secure 2>/dev/null || true
+    @docker rm cursor-api-run-secure 2>/dev/null || true
+    @echo "✅ Conteneur arrêté et supprimé"
+
+# Arrête Docker Run (mode non sécurisé)
+docker-run-down-insecure:
+    @echo "🛑 Arrêt de Docker Run (mode non sécurisé)..."
+    @docker stop cursor-api-run-insecure 2>/dev/null || true
+    @docker rm cursor-api-run-insecure 2>/dev/null || true
+    @echo "✅ Conteneur arrêté et supprimé"
+
+# Arrête tous les conteneurs Docker Run
+docker-run-down:
+    @echo "🛑 Arrêt de tous les conteneurs Docker Run..."
+    @docker stop cursor-api-run-secure cursor-api-run-insecure 2>/dev/null || true
+    @docker rm cursor-api-run-secure cursor-api-run-insecure 2>/dev/null || true
+    @echo "✅ Tous les conteneurs arrêtés et supprimés"
+
+# Voir les logs Docker Run (mode sécurisé)
+docker-run-logs-secure:
+    @echo "📋 Logs Docker Run (mode sécurisé)..."
+    @docker logs -f cursor-api-run-secure
+
+# Voir les logs Docker Run (mode non sécurisé)
+docker-run-logs-insecure:
+    @echo "📋 Logs Docker Run (mode non sécurisé)..."
+    @docker logs -f cursor-api-run-insecure
 
 # Tester les performances
 test-performance:
@@ -257,3 +467,18 @@ test-http-mode:
 test-cli-direct:
     @echo "⚡ Test de performance cursor-agent CLI direct..."
     @./scripts/test-cli-direct.sh
+
+# Tester les processus persistants
+test-persistent:
+    @echo "🧪 Test de processus persistant cursor-agent..."
+    @./scripts/test-persistent-process.sh
+
+# Tester les sessions avec --resume
+test-sessions:
+    @echo "🧪 Test des sessions cursor-agent..."
+    @./scripts/test-chat-session.sh
+
+# Comparer les performances --resume vs nouveau chat
+test-resume-perf:
+    @echo "⚡ Test de performance --resume vs nouveau chat..."
+    @./scripts/test-resume-performance.sh
